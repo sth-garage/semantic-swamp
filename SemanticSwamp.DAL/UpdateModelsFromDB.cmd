@@ -1,0 +1,1 @@
+dotnet ef dbcontext scaffold "Data Source=127.0.0.1;Initial Catalog=SemanticSwamp;User Id=semanticSwampServiceLogin;Password=Testing777!!;TrustServerCertificate=True" Microsoft.EntityFrameworkCore.SqlServer --context SemanticSwampDBContext --context-dir ./Context --force --output-dir ./EFModels --force
