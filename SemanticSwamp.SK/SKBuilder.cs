@@ -54,57 +54,23 @@ namespace SemanticSwamp.SK
             skBuilder.Plugins.AddFromType<DocumentUploadPlugin>();
 
 
-
             // Local RAG
             skBuilder.Services.AddSingleton<QdrantClient>(sp => new QdrantClient("localhost"));
             skBuilder.Services.AddQdrantVectorStore();
-            //skBuilder.Services.AddLocalTextEmbeddingGeneration();
 
             // Build the kernel
             Kernel kernel = skBuilder.Build();
 
-
+            var embeddingGenerator = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
+            var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
             var vectorStore = new QdrantVectorStore(new QdrantClient("localhost"), ownsClient: true);
-            var textEmbed = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
 
             var collection = new QdrantCollection<ulong, TextEntry>(
                 new QdrantClient("localhost"),
                 "text",
                 ownsClient: true);
 
-            //var collection = new QdrantCollection<ulong, FinanceInfo>(
-            //    new QdrantClient("localhost"),
-            //    "finance3",
-            //    ownsClient: true);
-
             await collection.EnsureCollectionExistsAsync();
-            ReadOnlyMemory<float> searchEmbedding = await textEmbed.GenerateEmbeddingAsync("This is a description");
-
-            //await collection.UpsertAsync(new FinanceInfo
-            //{
-            //    Key = Guid.NewGuid(),
-            //    Text = "test"
-            //});
-
-            //var test = collection.SearchAsync<string>("What is the names?", 2);
-            var embeddingGenerator = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
-
-            //ISemanticTextMemory memory = new MemoryBuilder()
-            //    .WithLoggerFactory(kernel.LoggerFactory)
-            //    .WithMemoryStore()
-            //    .WithTextEmbeddingGeneration(embeddingGenerator)
-            //    .Build();
-
-            ulong idValue = 3;
-            //await collection.UpsertAsync(new Hotel
-            //{
-            //    HotelId = idValue,
-            //    HotelName = "Name",
-            //    Description = "This is a description",
-            //    DescriptionEmbedding = searchEmbedding
-            //});
-
-
 
 
             //using HttpClient client = new();
@@ -131,25 +97,8 @@ namespace SemanticSwamp.SK
 
 
 
-            //var searchResult = new List<VectorSe>
-            var searchVector = (await embeddingGenerator.GenerateEmbeddingAsync("What are some security improvements in .NET?"));
-            await collection.SearchAsync(searchVector, top: 20, new()
-            {
 
-            }).ForEachAsync(x =>
-            {
-                var blah = x.Record;
-                var sto = 1;
-            });
-
-            //return resultRecords;
-
-
-            var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
-
-
-
-            var ai = kernel.GetRequiredService<IChatCompletionService>();
+            //var ai = kernel.GetRequiredService<IChatCompletionService>();
             ChatHistory chat = new("You are an AI assistant that helps people find information.");
             StringBuilder builder = new();
 
@@ -158,10 +107,18 @@ namespace SemanticSwamp.SK
             while (nextQuestion)
             {
                 //var question = AnsiConsole.Prompt(new TextPrompt<string>("[grey][[Optional]][/] Ask a Question: ").AllowEmpty());
-                
+                var vectorSearchOptions = new VectorSearchOptions<TextEntry>
+                {
+                    //Filter = r => r.ArticleName == "External Definitions"
+                };
                 builder.Clear();
-                await foreach (var result in collection.SearchAsync(searchVector, 3))
+                var question = "What are some security improvements in .NET?";
+                var searchVector = (await embeddingGenerator.GenerateEmbeddingAsync(question));
+
+                await foreach (var result in collection.SearchAsync(searchVector, 3, vectorSearchOptions))
+                {
                     builder.AppendLine(result.Record.Text);
+                }
 
                 int contextToRemove = -1;
                 if (builder.Length != 0)
@@ -174,7 +131,7 @@ namespace SemanticSwamp.SK
                 chat.AddUserMessage("What are some security improvements in .NET?");
 
                 builder.Clear();
-                await foreach (var message in ai.GetStreamingChatMessageContentsAsync(chat))
+                await foreach (var message in chatCompletionService.GetStreamingChatMessageContentsAsync(chat))
                 {
                     Console.Write(message);
                     builder.Append(message.Content);
@@ -185,11 +142,6 @@ namespace SemanticSwamp.SK
                 if (contextToRemove >= 0) chat.RemoveAt(contextToRemove);
                 Console.WriteLine();
             }
-
-
-
-
-
 
             return new SemanticKernelBuilderResult
             {
@@ -205,36 +157,36 @@ namespace SemanticSwamp.SK
 
 
 
-    public class FinanceInfo
-    {
-        [VectorStoreKey]
-        public Guid Key { get; set; } = Guid.NewGuid();
+    //public class FinanceInfo
+    //{
+    //    [VectorStoreKey]
+    //    public Guid Key { get; set; } = Guid.NewGuid();
 
-        [VectorStoreData]
-        public string Text { get; set; } = string.Empty;
+    //    [VectorStoreData]
+    //    public string Text { get; set; } = string.Empty;
 
-        // Note that the vector property is typed as a string, and
-        // its value is derived from the Text property. The string
-        // value will however be converted to a vector on upsert and
-        // stored in the database as a vector.
-        [VectorStoreVector(1536)]
-        public string Embedding => this.Text;
-    }
+    //    // Note that the vector property is typed as a string, and
+    //    // its value is derived from the Text property. The string
+    //    // value will however be converted to a vector on upsert and
+    //    // stored in the database as a vector.
+    //    [VectorStoreVector(1536)]
+    //    public string Embedding => this.Text;
+    //}
 
-    public class Hotel
-    {
-        [VectorStoreKey]
-        public ulong HotelId { get; set; }
+    //public class Hotel
+    //{
+    //    [VectorStoreKey]
+    //    public ulong HotelId { get; set; }
 
-        [VectorStoreData(IsIndexed = true, StorageName = "hotel_name")]
-        public string HotelName { get; set; }
+    //    [VectorStoreData(IsIndexed = true, StorageName = "hotel_name")]
+    //    public string HotelName { get; set; }
 
-        [VectorStoreData(IsFullTextIndexed = true, StorageName = "hotel_description")]
-        public string Description { get; set; }
+    //    [VectorStoreData(IsFullTextIndexed = true, StorageName = "hotel_description")]
+    //    public string Description { get; set; }
 
-        [VectorStoreVector(384)]
-        public ReadOnlyMemory<float>? DescriptionEmbedding { get; set; }
-    }
+    //    [VectorStoreVector(384)]
+    //    public ReadOnlyMemory<float>? DescriptionEmbedding { get; set; }
+    //}
 
     public class TextEntry
     {
