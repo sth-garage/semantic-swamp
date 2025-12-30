@@ -14,8 +14,10 @@ using Qdrant.Client;
 using SemanticSwamp.DAL.Context;
 using SemanticSwamp.Shared.Models;
 using SemanticSwamp.SK.Plugins;
+using System.Collections;
 using System.Data.SqlTypes;
 using System.Net;
+using System.Text;
 using System.Text.RegularExpressions;
 #pragma warning disable SKEXP0010
 #pragma warning disable SKEXP0001
@@ -65,9 +67,9 @@ namespace SemanticSwamp.SK
             var vectorStore = new QdrantVectorStore(new QdrantClient("localhost"), ownsClient: true);
             var textEmbed = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
 
-            var collection = new QdrantCollection<ulong, Hotel>(
+            var collection = new QdrantCollection<ulong, TextEntry>(
                 new QdrantClient("localhost"),
-                "hotel4",
+                "text",
                 ownsClient: true);
 
             //var collection = new QdrantCollection<ulong, FinanceInfo>(
@@ -85,20 +87,52 @@ namespace SemanticSwamp.SK
             //});
 
             //var test = collection.SearchAsync<string>("What is the names?", 2);
-
-
-            ulong idValue = 3;
-            await collection.UpsertAsync(new Hotel
-            {
-                HotelId = idValue,
-                HotelName = "Name",
-                Description = "This is a description",
-                DescriptionEmbedding = searchEmbedding
-            });
-
             var embeddingGenerator = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
 
-            var searchVector = (await embeddingGenerator.GenerateEmbeddingAsync("test"));
+            //ISemanticTextMemory memory = new MemoryBuilder()
+            //    .WithLoggerFactory(kernel.LoggerFactory)
+            //    .WithMemoryStore()
+            //    .WithTextEmbeddingGeneration(embeddingGenerator)
+            //    .Build();
+
+            ulong idValue = 3;
+            //await collection.UpsertAsync(new Hotel
+            //{
+            //    HotelId = idValue,
+            //    HotelName = "Name",
+            //    Description = "This is a description",
+            //    DescriptionEmbedding = searchEmbedding
+            //});
+
+
+
+
+            //using HttpClient client = new();
+            //string s = await client.GetStringAsync("https://devblogs.microsoft.com/dotnet/performance_improvements_in_net_7");
+            //List<string> paragraphs =
+            //    TextChunker.SplitPlainTextParagraphs(
+            //        TextChunker.SplitPlainTextLines(
+            //            WebUtility.HtmlDecode(Regex.Replace(s, @"<[^>]+>|&nbsp;", "")),
+            //            128),
+            //        1024);
+            //for (int i = 0; i < paragraphs.Count; i++)
+            //{ 
+            //    var paragraph = paragraphs[i];
+
+            //    await collection.UpsertAsync(new TextEntry
+            //    {
+            //        Id = idValue++,
+            //        ArticleName = "Test",
+            //        Text = paragraph,
+            //        TextEmbedding = await textEmbed.GenerateEmbeddingAsync(paragraph)
+            //    });
+            //}
+
+
+
+
+            //var searchResult = new List<VectorSe>
+            var searchVector = (await embeddingGenerator.GenerateEmbeddingAsync("What are some security improvements in .NET?"));
             await collection.SearchAsync(searchVector, top: 20, new()
             {
 
@@ -112,6 +146,50 @@ namespace SemanticSwamp.SK
 
 
             var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
+
+
+
+            var ai = kernel.GetRequiredService<IChatCompletionService>();
+            ChatHistory chat = new("You are an AI assistant that helps people find information.");
+            StringBuilder builder = new();
+
+            // User question & answer loop
+            bool nextQuestion = true;
+            while (nextQuestion)
+            {
+                //var question = AnsiConsole.Prompt(new TextPrompt<string>("[grey][[Optional]][/] Ask a Question: ").AllowEmpty());
+                
+                builder.Clear();
+                await foreach (var result in collection.SearchAsync(searchVector, 3))
+                    builder.AppendLine(result.Record.Text);
+
+                int contextToRemove = -1;
+                if (builder.Length != 0)
+                {
+                    builder.Insert(0, "Here's some additional information: ");
+                    contextToRemove = chat.Count;
+                    chat.AddUserMessage(builder.ToString());
+                }
+
+                chat.AddUserMessage("What are some security improvements in .NET?");
+
+                builder.Clear();
+                await foreach (var message in ai.GetStreamingChatMessageContentsAsync(chat))
+                {
+                    Console.Write(message);
+                    builder.Append(message.Content);
+                }
+                Console.WriteLine();
+                chat.AddAssistantMessage(builder.ToString());
+
+                if (contextToRemove >= 0) chat.RemoveAt(contextToRemove);
+                Console.WriteLine();
+            }
+
+
+
+
+
 
             return new SemanticKernelBuilderResult
             {
@@ -156,5 +234,20 @@ namespace SemanticSwamp.SK
 
         [VectorStoreVector(384)]
         public ReadOnlyMemory<float>? DescriptionEmbedding { get; set; }
+    }
+
+    public class TextEntry
+    {
+        [VectorStoreKey]
+        public ulong Id { get; set; }
+
+        [VectorStoreData(IsIndexed = true)]
+        public string ArticleName { get; set; }
+
+        [VectorStoreData(IsFullTextIndexed = true)]
+        public string Text { get; set; }
+
+        [VectorStoreVector(384)]
+        public ReadOnlyMemory<float>? TextEmbedding { get; set; }
     }
 }
