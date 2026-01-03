@@ -99,49 +99,49 @@ namespace SemanticSwamp.SK
 
 
             //var ai = kernel.GetRequiredService<IChatCompletionService>();
-            ChatHistory chat = new("You are an AI assistant that helps people find information.");
-            StringBuilder builder = new();
+            //ChatHistory chat = new("You are an AI assistant that helps people find information.");
+            //StringBuilder builder = new();
 
-            // User question & answer loop
-            bool nextQuestion = true;
-            while (nextQuestion)
-            {
-                //var question = AnsiConsole.Prompt(new TextPrompt<string>("[grey][[Optional]][/] Ask a Question: ").AllowEmpty());
-                var vectorSearchOptions = new VectorSearchOptions<TextEntry>
-                {
-                    //Filter = r => r.ArticleName == "External Definitions"
-                };
-                builder.Clear();
-                var question = "What are some security improvements in .NET?";
-                var searchVector = (await embeddingGenerator.GenerateEmbeddingAsync(question));
+            //// User question & answer loop
+            //bool nextQuestion = true;
+            //while (nextQuestion)
+            //{
+            //    //var question = AnsiConsole.Prompt(new TextPrompt<string>("[grey][[Optional]][/] Ask a Question: ").AllowEmpty());
+            //    var vectorSearchOptions = new VectorSearchOptions<TextEntry>
+            //    {
+            //        //Filter = r => r.ArticleName == "External Definitions"
+            //    };
+            //    builder.Clear();
+            //    var question = "What are some security improvements in .NET?";
+            //    var searchVector = (await embeddingGenerator.GenerateEmbeddingAsync(question));
 
-                await foreach (var result in collection.SearchAsync(searchVector, 3, vectorSearchOptions))
-                {
-                    builder.AppendLine(result.Record.Text);
-                }
+            //    await foreach (var result in collection.SearchAsync(searchVector, 3, vectorSearchOptions))
+            //    {
+            //        builder.AppendLine(result.Record.Text);
+            //    }
 
-                int contextToRemove = -1;
-                if (builder.Length != 0)
-                {
-                    builder.Insert(0, "Here's some additional information: ");
-                    contextToRemove = chat.Count;
-                    chat.AddUserMessage(builder.ToString());
-                }
+            //    int contextToRemove = -1;
+            //    if (builder.Length != 0)
+            //    {
+            //        builder.Insert(0, "Here's some additional information: ");
+            //        contextToRemove = chat.Count;
+            //        chat.AddUserMessage(builder.ToString());
+            //    }
 
-                chat.AddUserMessage("What are some security improvements in .NET?");
+            //    chat.AddUserMessage("What are some security improvements in .NET?");
 
-                builder.Clear();
-                await foreach (var message in chatCompletionService.GetStreamingChatMessageContentsAsync(chat))
-                {
-                    Console.Write(message);
-                    builder.Append(message.Content);
-                }
-                Console.WriteLine();
-                chat.AddAssistantMessage(builder.ToString());
+            //    builder.Clear();
+            //    await foreach (var message in chatCompletionService.GetStreamingChatMessageContentsAsync(chat))
+            //    {
+            //        Console.Write(message);
+            //        builder.Append(message.Content);
+            //    }
+            //    Console.WriteLine();
+            //    chat.AddAssistantMessage(builder.ToString());
 
-                if (contextToRemove >= 0) chat.RemoveAt(contextToRemove);
-                Console.WriteLine();
-            }
+            //    if (contextToRemove >= 0) chat.RemoveAt(contextToRemove);
+            //    Console.WriteLine();
+            //}
 
             return new SemanticKernelBuilderResult
             {

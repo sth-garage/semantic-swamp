@@ -84,17 +84,17 @@ public class ChatController : ControllerBase
 
             chatHistory.AddSystemMessage(Prompts.TempSystemPrompt);
 
-            StringBuilder docUploadsSB = new StringBuilder();
+            //StringBuilder docUploadsSB = new StringBuilder();
 
-            foreach (var docUpload in context.DocumentUploads)
-            {
-                docUploadsSB.AppendLine(String.Format("Document Upload Id [{0}] - FileName: [{1}] - Base64Data: [{2}]",
-                    docUpload.Id,
-                    docUpload.FileName,
-                    docUpload.Base64Data));
-            }
+            //foreach (var docUpload in context.DocumentUploads)
+            //{
+            //    docUploadsSB.AppendLine(String.Format("Document Upload Id [{0}] - FileName: [{1}] - Base64Data: [{2}]",
+            //        docUpload.Id,
+            //        docUpload.FileName,
+            //        docUpload.Base64Data));
+            //}
 
-            chatHistory.AddDeveloperMessage("Document Uploads: " + docUploadsSB.ToString());
+            //chatHistory.AddDeveloperMessage("Document Uploads: " + docUploadsSB.ToString());
 
 
             while (!receiveResult.CloseStatus.HasValue)
@@ -116,7 +116,8 @@ public class ChatController : ControllerBase
                     .Replace("<|channel|>final <|constrain|>html<|message|>", "")
                     .Replace("<|channel|>final <|constrain|>", "")
                     .Replace("div<|message|>", "")
-                    .Replace("<|message|>", "");
+                    .Replace("<|message|>", "")
+                    .Replace("commentary", "");
 
                 chatHistory.AddAssistantMessage(result.Content);
 

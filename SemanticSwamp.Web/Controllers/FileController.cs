@@ -1,5 +1,8 @@
 ﻿// FilesController.cs
 using Microsoft.AspNetCore.Mvc;
+using SemanticSwamp.DAL.Context;
+using SemanticSwamp.DAL.EFModels;
+using SemanticSwamp.Web.DTOs;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -7,6 +10,14 @@ using System.Threading.Tasks;
 [Route("api/[controller]")]
 public class FileController : ControllerBase
 {
+    private SemanticSwampDBContext _context;
+
+    public FileController(SemanticSwampDBContext context)
+    {
+        _context = context; 
+    }
+
+
     // GET api/files/download?filename=example.txt
     [HttpGet("download")]
     public async Task<IActionResult> Download([FromQuery] string filename)
@@ -27,7 +38,76 @@ public class FileController : ControllerBase
         var contentType = "application/octet-stream";
         return File(memory, contentType, filename);
     }
+
+
+    [HttpPost("upload")]
+    public async Task<IActionResult> Upload(FileUploadDTO input)
+
+    {
+        var returnMsg = "";
+
+        var existing = _context.DocumentUploads.FirstOrDefault(x => x.IsActive && x.FileName == input.file.FileName);
+
+        if (existing == null)
+        {
+            if (input != null
+                && input.file != null
+                && input.file.Length != 0)
+            {
+                var base64Data = await GetBase64DataFromFile(input.file);
+
+                DocumentUpload documentUpload = new DocumentUpload
+                {
+                    Base64Data = base64Data,
+                    FileName = input.file.FileName,
+                    CreatedOn = DateTime.Now,
+                    HasBeenProcessed = false,
+                    IsActive = true
+                };
+
+                _context.DocumentUploads.Add(documentUpload);
+                await _context.SaveChangesAsync();
+                returnMsg = input.file.FileName + " was successfully uploaded";
+            }
+            else
+            {
+                returnMsg = "There was a problem with the input file or type provided";
+            }
+        }
+        else
+        {
+            returnMsg = input.file.FileName + " has already been added";
+        }
+
+        return Ok(returnMsg);
+
+    }
+
+    private async Task<string> GetBase64DataFromFile(IFormFile file)
+    {
+        var bytes = await GetBytesFromIFormFileAsync(file);
+
+        return Convert.ToBase64String(bytes);
+    }
+
+    private async Task<byte[]> GetBytesFromIFormFileAsync(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return null;
+        }
+
+        using (var stream = new MemoryStream())
+        {
+            await file.CopyToAsync(stream);
+            return stream.ToArray();
+        }
+    }
+
+
 }
+
+
 
 
 /*
