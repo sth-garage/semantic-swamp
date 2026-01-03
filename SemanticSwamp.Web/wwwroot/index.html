@@ -170,279 +170,49 @@
                 box-shadow: var(--ring-focus);
             }
 
-        /* Message bubbles */
-        .chat-message {
-            display: flex;
-            margin: 10px 8px;
-            gap: 8px;
-            align-items: flex-end;
-        }
-
-            .chat-message[data-role="Client"] {
-                justify-content: flex-end;
-            }
-
-            .chat-message[data-role="Assistant"],
-            .chat-message[data-role="System"] {
-                justify-content: flex-start;
-            }
-
-        .chat-bubble {
-            position: relative;
-            padding: 12px 14px 22px;
-            border-radius: 14px;
-            border: 1.5px solid var(--gb-border);
-            background: rgba(255, 255, 255, 0.96);
-            color: var(--gb-text);
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-            line-height: 1.45;
-            min-width: 20%;
-            min-height: 10%;
-        }
-
-        .chat-message[data-role="Client"] .chat-bubble {
-            background: var(--chat-user);
-            border-color: rgba(69, 145, 226, 0.55);
-        }
-
-        .chat-message[data-role="Assistant"] .chat-bubble {
-            background: var(--chat-assistant);
-            border-color: rgba(143, 93, 156, 0.55);
-        }
-
-        .chat-message[data-role="System"] .chat-bubble {
-            background: var(--chat-system);
-            border-color: rgba(54, 39, 48, 0.35);
-        }
-
-        /* Latency badge */
-        .latency-badge {
-            position: absolute;
-            right: 10px;
-            bottom: 6px;
-            font-size: 0.8rem;
-            color: var(--gb-blue-800);
-            background: rgba(254, 250, 224, 0.95);
-            border: 1px solid var(--gb-border);
-            border-radius: 10px;
-            padding: 2px 8px;
-            cursor: pointer;
-        }
-
-            .latency-badge:hover {
-                background: rgba(254, 250, 224, 1);
-            }
-
-            .latency-badge:focus {
-                outline: 2px solid var(--gb-blue-700);
-                outline-offset: 1px;
-            }
-
-        /* Typing bubble */
-        .typing-bubble {
-            display: inline-flex;
-            gap: 6px;
-            align-items: center;
-            justify-content: center;
-            min-width: 56px;
-            padding: 12px 16px;
-        }
-
-            .typing-bubble .dot {
-                width: 8px;
-                height: 8px;
-                border-radius: 50%;
-                background: var(--gb-blue-700);
-                opacity: 0.6;
-                animation: blink 1.2s infinite ease-in-out;
-            }
-
-                .typing-bubble .dot:nth-child(2) {
-                    animation-delay: 0.2s;
-                }
-
-                .typing-bubble .dot:nth-child(3) {
-                    animation-delay: 0.4s;
-                }
-
-        @keyframes blink {
-            0%, 80%, 100% {
-                opacity: 0.2;
-                transform: translateY(0);
-            }
-
-            40% {
-                opacity: 1;
-                transform: translateY(-2px);
-            }
-        }
-
-        /* Modal styling for chat details */
-        .modal-content {
-            border-radius: 14px;
-            border: 1px solid var(--gb-border);
-        }
-
-        .modal-header {
-            background: rgba(254, 250, 224, 0.95);
-            border-bottom: 1px solid var(--gb-border);
-        }
-
-        .modal-body pre {
-            white-space: pre-wrap;
-            border-radius: 10px;
-        }
-
-        .md-line {
-            margin-bottom: 8px;
-        }
-
-        .md-label {
+        /* Style for Upload button (opens modal) */
+        #uploadBtn.btn {
+            background: linear-gradient(180deg, #E164A7, #8F5D9C);
+            color: #fff;
             font-weight: 800;
-            color: var(--gb-blue-800);
-            margin-right: 6px;
+            border-radius: 12px;
+            padding: 0.62em 1.4em;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 22px rgba(225, 100, 167, 0.35);
         }
 
-        .md-meta-wrap {
-            margin-top: 10px;
-            padding: 12px;
-            background: rgba(254, 250, 224, 0.85);
-            border: 1px solid var(--gb-border);
-            border-radius: 10px;
-        }
+            #uploadBtn.btn:disabled {
+                background: rgba(225, 100, 167, 0.35);
+                color: rgba(54, 39, 48, 0.8);
+                box-shadow: none;
+                border-color: rgba(225, 100, 167, 0.55);
+            }
 
-        .md-subtitle {
+            #uploadBtn.btn:not(:disabled):hover {
+                background: linear-gradient(180deg, #e87bb3, #9b6ca7);
+            }
+
+        /* Style for Upload button inside modal */
+        #uploadFileBtn.btn {
+            background: linear-gradient(180deg, #E164A7, #8F5D9C);
+            color: #fff;
             font-weight: 800;
-            color: var(--gb-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-            font-size: 0.85rem;
-            margin: 6px 0 8px 0;
+            border-radius: 12px;
+            padding: 0.62em 1.4em;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10x 22px rgba(225, 100, 167, 0.35);
         }
 
-        .token-usage-list {
-            margin: 0 0 8px 0;
-            padding-left: 16px;
-        }
-
-            .token-usage-list li {
-                margin: 2px 0;
+            #uploadFileBtn.btn:disabled {
+                background: rgba(225, 100, 167, 0.35);
+                color: rgba(54, 39, 48, 0.8);
+                box-shadow: none;
+                border-color: rgba(225, 100, 167, 0.55);
             }
 
-        .refusal-box {
-            border: 2px solid var(--gb-pink);
-            background: #fff5f5;
-            color: #7f1d1d;
-            padding: 10px 12px;
-            border-radius: 8px;
-            margin-top: 8px;
-            font-weight: 700;
-        }
-
-        .pre-raw {
-            background: #0b1020;
-            color: #e4e8f8;
-            border: 1px solid #1f2a44;
-            padding: 12px;
-            border-radius: 10px;
-            max-height: 420px;
-            overflow: auto;
-        }
-
-        .copy-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        /* Anchor styles for latest assistant message */
-        .chat-message.latest-assistant-anchor[data-role="Assistant"] {
-            display: grid !important;
-            /*grid-template-columns: 54px 1fr;*/
-            grid-template-columns: 54px;
-            align-items: center;
-        }
-
-            .chat-message.latest-assistant-anchor[data-role="Assistant"] > .chat-bubble {
-                grid-column: 2;
+            #uploadFileBtn.btn:not(:disabled):hover {
+                background: linear-gradient(180deg, #e87bb3, #9b6ca7);
             }
-
-            .chat-message.latest-assistant-anchor[data-role="Assistant"]::before {
-                content: "";
-                width: 60px;
-                height: 60px;
-                border-radius: 50%;
-                border: 2px solid rgba(254, 250, 224, 0.96);
-                box-shadow: 0 8px 18px rgba(54, 39, 48, 0.35);
-                background-color: #fff;
-                background-image: var(--assistant-avatar-url);
-                background-position: center;
-                background-repeat: no-repeat;
-                background-size: cover;
-                grid-column: 1;
-                justify-self: start;
-            }
-
-        .chat-message.latest-assistant-anchor[data-role="Client"] {
-            display: grid !important;
-            grid-template-columns: 1fr;
-            grid-template-rows: auto auto;
-            justify-items: end;
-        }
-
-            .chat-message.latest-assistant-anchor[data-role="Client"] > .chat-bubble {
-                grid-row: 1;
-            }
-
-            .chat-message.latest-assistant-anchor[data-role="Client"]::after {
-                content: "";
-                width: 75px;
-                height: 75px;
-                border: 2px solid rgba(254, 250, 224, 0.96);
-                box-shadow: 0 6px 14px rgba(54, 39, 48, 0.35);
-                background-color: #fff;
-                background-image: var(--assistant-avatar-thinking-url);
-                background-position: left;
-                background-repeat: no-repeat;
-                background-size: cover;
-                grid-row: 2;
-                margin-top: 6px;
-                margin-right: 90%;
-            }
-
-        /* Welcome message */
-        .welcome-message {
-            text-align: center;
-            color: var(--gb-purple-800);
-            font-size: 1.2rem;
-        }
-
-            .welcome-message h1 {
-                font-size: 2.5rem;
-                margin-bottom: 20px;
-                color: var(--gb-blue-800);
-                text-shadow: 1px 1px 2px rgba(54, 39, 48, 0.5);
-            }
-
-            .welcome-message p {
-                font-size: 1.05rem;
-                line-height: 1;
-                margin-bottom: 20px;
-            }
-
-        /* Highlights */
-        .highlight {
-            color: var(--gb-pink);
-            font-weight: bold;
-        }
-
-        .hopeful-gradient {
-            background: linear-gradient(135deg, #63B3ED 0%, #8F5D9C 50%, #E164A7 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-weight: bold;
-        }
     </style>
 </head>
 
@@ -477,9 +247,9 @@
                            disabled />
                     <button id="sendButton" class="btn" type="button" disabled>Send</button>
                     <!-- New Upload File button -->
-                    <button id="uploadBtn" class="btn btn-secondary ms-2" type="button"
+                    <button id="uploadBtn" class="btn ms-2" type="button"
                             data-bs-toggle="modal" data-bs-target="#uploadModal" disabled>
-                        Upload File
+                        Upload
                     </button>
                 </div>
             </section>
@@ -522,18 +292,39 @@
                     <!-- Collections dropdown -->
                     <div class="mb-3">
                         <label for="collectionsDropdown" class="form-label">Collections</label>
-                        <select class="form-select" id="collectionsDropdown"></select>
+                        <div id="collectionSelectionWrapper" class="d-flex align-items-center">
+                            <select class="form-select me-2" id="collectionsDropdown"></select>
+                            <input type="text" class="form-control d-none me-2" id="newCollectionInput" placeholder="New Collection Name">
+                            <button type="button" class="btn btn-outline-secondary toggle-btn" data-target="collection">Add</button>
+                        </div>
                     </div>
 
                     <!-- Categories dropdown -->
                     <div class="mb-3">
                         <label for="categoriesDropdown" class="form-label">Categories</label>
-                        <select class="form-select" id="categoriesDropdown"></select>
+                        <div id="categorySelectionWrapper" class="d-flex align-items-center">
+                            <select class="form-select me-2" id="categoriesDropdown"></select>
+                            <input type="text" class="form-control d-none me-2" id="newCategoryInput" placeholder="New Category Name">
+                            <button type="button" class="btn btn-outline-secondary toggle-btn" data-target="category">Add</button>
+                        </div>
+                    </div>
+
+                    <!-- Terms multiselect -->
+                    <div class="mb-3">
+                        <label class="form-label">Terms</label>
+                        <div id="termsContainer" style="max-height:150px; overflow-y:auto;">
+                            <!-- checkboxes will be inserted here -->
+                        </div>
+                        <div class="d-flex align-items-center mt-2">
+                            <input type="text" id="newTermInput" class="form-control me-2" placeholder="New term name">
+                            <button type="button" id="addTermBtn" class="btn btn-outline-primary">Add Term</button>
+                        </div>
+                        <div id="addedTermsContainer" class="mt-2"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" id="uploadFileBtn" class="btn btn-primary">Upload File</button>
+                    <button type="button" id="uploadFileBtn" class="btn">Upload</button>
                 </div>
             </div>
         </div>
@@ -548,8 +339,9 @@ $(function () {
   const $sendButton = $("#sendButton");
   const $uploadBtn   = $("#uploadBtn"); // new button
 
-  // Class name for the latest assistant message anchor (used to keep it visible)
-  const LATEST_ANCHOR_CLASS = "latest-assistant-anchor";
+  /* Class name for the latest assistant message anchor (used to keep it visible) */
+
+  
 
   /* Connection and state variables */
   let socket;
@@ -560,6 +352,9 @@ $(function () {
   let hasSystemGreeted = false;        // flag to enable inputs after initial greeting
   const userInputHistory = [];          // history array for arrow key navigation
   let userInputIndex = -1;
+
+  const $LATEST_ANCHOR_CLASS = "latest-assistant-anchor";
+  const LATEST_ANCHOR_CLASS = "latest-assistant-anchor";
 
   /* Enable or disable the input controls */
   function enableInputs(state = true) {
@@ -660,7 +455,7 @@ $(function () {
   function setLatestAnchor($el) {
     $(`.chat-message.${LATEST_ANCHOR_CLASS}`).removeClass(LATEST_ANCHOR_CLASS);
     if ($el && $el.length) {
-      $el.addClass(LATEST_ANCHOR_CLASS);
+      //$el.addClass(LATEST_ASSISTANT_ANCHOR_CLASS);
     }
   }
 
@@ -859,6 +654,9 @@ $(function () {
 
   /* ------- Upload Modal Logic -------- */
 
+  // New array to store names of new terms
+  let newTermNames = [];
+
   // Sample collections and categories arrays (start with 'default')
   const collections = ['default'];
   const categories  = ['default'];
@@ -867,13 +665,87 @@ $(function () {
     const $sel = $(selector);
     $sel.empty();
     $.each(array, function(index, value){
-      $sel.append(`<option value="${index}">${value}</option>`);
+      $sel.append(`<option value="${index + 1}">${value}</option>`);
     });
+    // Set default selected to 'default' which has value 1
+    $sel.val('1');
   }
 
   // Populate dropdowns on page load
   populateSelect('#collectionsDropdown', collections);
   populateSelect('#categoriesDropdown', categories);
+
+  /* Function to return static terms list */
+  function getTerms() {
+      return ['Finance', 'Health', 'Technology', 'Education'];
+  }
+
+  function populateTerms() {
+    const $termsContainer = $('#termsContainer');
+    $termsContainer.empty();
+    const termsList = getTerms(); // static array
+    $.each(termsList, function(index, term){
+      const id = index + 1;
+      const html = `<div class="form-check">
+        <input class="form-check-input" type="checkbox" value="${id}" id="term-${id}">
+        <label class="form-check-label" for="term-${id}">${term}</label>
+      </div>`;
+      $termsContainer.append(html);
+    });
+  }
+
+  populateTerms();
+
+  /* Toggle between dropdown and text input for collection/category */
+  $(document).on('click', '.toggle-btn', function(){
+    const target = $(this).data('target');
+    if(target === 'collection'){
+       const $select = $('#collectionsDropdown');
+       const $input = $('#newCollectionInput');
+       const $btn = $(this);
+       if($select.is(':visible')){
+          $select.addClass('d-none');
+          $input.removeClass('d-none').focus();
+          $btn.text('Back');
+       } else {
+          $select.removeClass('d-none');
+          $input.addClass('d-none').val('');
+          $btn.text('Add');
+       }
+    } else if(target === 'category'){
+       const $select = $('#categoriesDropdown');
+       const $input = $('#newCategoryInput');
+       const $btn = $(this);
+       if($select.is(':visible')){
+          $select.addClass('d-none');
+          $input.removeClass('d-none').focus();
+          $btn.text('Back');
+       } else {
+          $select.removeClass('d-none');
+          $input.addClass('d-none').val('');
+          $btn.text('Add');
+       }
+    }
+  });
+
+  /* Add new term button logic */
+  $('#addTermBtn').on('click', function(){
+      const termName = $('#newTermInput').val().trim();
+      if(!termName) return;
+      newTermNames.push(termName);
+      // create badge with remove option
+      const $badge = $('<span>').addClass('badge bg-secondary me-1 mb-1').text(termName + ' ');
+      const $removeBtn = $('<button type="button" class="btn-close btn-close-white ms-1 p-0"></button>');
+      $removeBtn.on('click', function(){
+          // Remove from array
+          const idx = newTermNames.indexOf(termName);
+          if(idx !== -1) newTermNames.splice(idx, 1);
+          $(this).parent().remove();
+      });
+      $badge.append($removeBtn);
+      $('#addedTermsContainer').append($badge);
+      $('#newTermInput').val('');
+  });
 
   // File selection handling
   const $chooseFileBtn = $('#chooseFileBtn');
@@ -901,16 +773,43 @@ $(function () {
       return;
     }
 
-    const collectionId = parseInt($('#collectionsDropdown').val(), 10);
-    const categoryId   = parseInt($('#categoriesDropdown').val(), 10);
+    // Get new names
+    let newCollectionName = $('#newCollectionInput').val().trim();
+    let newCategoryName = $('#newCategoryInput').val().trim();
 
     const formData = new FormData();
     formData.append('file', file);
+
+    // Always send existing IDs
+    const collectionId = parseInt($('#collectionsDropdown').val(), 10);
     formData.append('collectionId', collectionId);
+    const categoryId = parseInt($('#categoriesDropdown').val(), 10);
     formData.append('categoryId', categoryId);
 
+    // Add new names if provided
+    if (newCollectionName) {
+      formData.append('newCollectionName', newCollectionName);
+    }
+    if (newCategoryName) {
+      formData.append('newCategoryName', newCategoryName);
+    }
+
+    // Term IDs from checkboxes
+    const termIds = [];
+    $('#termsContainer input[type="checkbox"]:checked').each(function(){
+        termIds.push($(this).val());
+    });
+    if (termIds.length > 0) {
+      formData.append('termIds', JSON.stringify(termIds));
+    }
+
+    // New terms names
+    if (newTermNames.length > 0) {
+      formData.append('newTermNames', JSON.stringify(newTermNames));
+    }
+
     const $btn = $(this);
-    $btn.prop('disabled', true);
+    $btn.prop("disabled", true);
 
     fetch('/api/file/upload', {
       method: 'POST',
@@ -918,25 +817,40 @@ $(function () {
     })
     .then(r => r.ok ? r.text() : Promise.reject(r))
     .then(text => {
-      alert('Upload succeeded');
-      $('#uploadModal').modal('hide');
+        alert('Upload succeeded');
+        $('#uploadModal').modal('hide');
     })
     .catch(err => {
-      console.error(err);
-      alert('Upload failed.');
+        console.error(err);
+        alert('Upload failed.');
     })
     .finally(() => {
-      $btn.prop('disabled', false);
+        $btn.prop("disabled", false);
     });
   });
 
   // Reset modal fields when closed
   $('#uploadModal').on('hidden.bs.modal', function(){
-    $fileInput.val('');
-    $selectedName.text('');
-    // Optionally reset dropdowns to first option
-    $('#collectionsDropdown').val(0);
-    $('#categoriesDropdown').val(0);
+      $fileInput.val('');
+      $selectedName.text('');
+      // Reset dropdowns to default (value 1)
+      $('#collectionsDropdown').val('1');
+      $('#categoriesDropdown').val('1');
+
+      // Hide new input fields
+      $('#newCollectionInput').addClass('d-none').val('');
+      $('#newCategoryInput').addClass('d-none').val('');
+
+      // Reset toggle button text to 'Add'
+      $('.toggle-btn[data-target="collection"]').text('Add');
+      $('.toggle-btn[data-target="category"]').text('Add');
+
+      // Uncheck all terms
+      $('#termsContainer input[type="checkbox"]').prop('checked', false);
+
+      // Clear added term tags and array
+      $('#addedTermsContainer').empty();
+      newTermNames = [];
   });
 });
     </script>
