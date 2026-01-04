@@ -1171,7 +1171,7 @@ $(function () {
             $tbody.empty();
             data.forEach(doc => {
                 const name = doc.fileName ?? '';
-                const createdOn = doc.createdOn ? new Date(doc.createdOn).toLocaleString() : '';
+                const createdOn = doc.createdOn || '';
 
                 const isActive = doc.isActive ? 'Yes' : 'No';
                 const processed = doc.hasBeenProcessed ? 'Yes' : 'No';
