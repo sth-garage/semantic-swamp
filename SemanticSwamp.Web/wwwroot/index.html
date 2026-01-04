@@ -149,6 +149,7 @@
         /* Buttons */
         #sendButton.btn,
         #uploadBtn.btn,
+        #uploadFileBtn.btn,
         #documentsBtn.btn {
             background: linear-gradient(180deg, #E164A7, #8F5D9C);
             color: #fff;
@@ -161,6 +162,7 @@
 
             #sendButton.btn:disabled,
             #uploadBtn.btn:disabled,
+            #documentFileBtn.btn:not(:disabled):hover,
             #documentsBtn.btn:disabled {
                 background: rgba(225, 100, 167, 0.35);
                 color: rgba(54, 39, 48, 0.8);
@@ -170,9 +172,11 @@
 
             #sendButton.btn:not(:disabled):hover,
             #uploadBtn.btn:not(:disabled):hover,
+            #uploadFileBtn.btn:not(:disabled):hover,
             #documentsBtn.btn:not(:disabled):hover {
                 background: linear-gradient(180deg, #e87bb3, #9b6ca7);
             }
+
 
         /* Chat message bubble */
         .chat-message {
@@ -474,7 +478,7 @@
                            disabled />
                     <button id="sendButton" class="btn" type="button" disabled>Send</button>
                     <!-- Upload File button -->
-                    <button id="uploadBtn" class="btn ms-2" type="button"
+                    <button id="uploadBtn" class="btn ms-2 " type="button"
                             data-bs-toggle="modal" data-bs-target="#uploadModal" disabled>
                         Upload
                     </button>
