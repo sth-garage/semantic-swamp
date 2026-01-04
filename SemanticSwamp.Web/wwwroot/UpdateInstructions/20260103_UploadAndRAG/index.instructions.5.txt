@@ -1,3 +1,38 @@
+Below is a single HTML/CS/JS file.  
+
+On the upload file modal screen:
+
+1. a new dropdown in the upper left styled a bit differently but consistent with the current color scheme - 
+2. the dropdown should populate in a similar fashion as the Collections and Categories (endpoint - api\Enum\UploadLocalFileType).  A list of strings will be passed.  
+
+While a value other than the default is selected:
+1. Change the text of the Upload File button to be 'Test Local File ' + the selected file name - the style/color and hover over also need to be changed and distinct
+2. disable the other fields except the clear and upload file buttons
+3. When the upload file button is clicked, 
+    3.1 a POST call is made to "/api/file/UploadLocalFileType", passing the text of the local file type dropdown's selected text as localFileName
+    3.2 when the result is received, display it as a scrollable popup with a close button
+
+While the default value ("Select a local file") is selected:
+1. Change the Upload File button back
+2. the other fields become editable again
+
+
+In addition, display a + / - icon on the document uploads in the document upload modal.  "+" will expand the selection, "-" will collapse it
+
+Give each row on the document uploads modal 
+1. a hover CSS color/style change
+
+Give the table of document uploads in the document upload modal
+1. Zebra stripe (using the current color scheme) the rows
+
+Think hard and make sure the requirements for the functionality are met.
+
+Return a single HTML/CS/JS file - must be valid HTML
+
+----- EXISTING --------
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -177,35 +212,297 @@
                 background: linear-gradient(180deg, #e87bb3, #9b6ca7);
             }
 
-        /* Custom local file type dropdown styling */
-        .custom-local-file-type {
-            background-color: var(--gb-purple-800);
-            border: 1px solid var(--gb-border);
+        /* Chat message bubble */
+        .chat-message {
+            display: flex;
+            margin: 10px 8px;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+            .chat-message[data-role="Client"] {
+                justify-content: flex-end;
+            }
+
+            .chat-message[data-role="Assistant"],
+            .chat-message[data-role="System"] {
+                justify-content: flex-start;
+            }
+
+        .chat-bubble {
+            position: relative;
+            padding: 12px 14px 22px;
+            border-radius: 14px;
+            border: 1.5px solid var(--gb-border);
+            background: rgba(255, 255, 255, 0.96);
             color: var(--gb-text);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+            line-height: 1.45;
+            min-width: 20%;
+            min-height: 10%;
         }
 
-            .custom-local-file-type option {
-                color: var(--gb-text);
+        .chat-message[data-role="Client"] .chat-bubble {
+            background: var(--chat-user);
+            border-color: rgba(69, 145, 226, 0.55);
+        }
+
+        .chat-message[data-role="Assistant"] .chat-bubble {
+            background: var(--chat-assistant);
+            border-color: rgba(143, 93, 156, 0.55);
+        }
+
+        .chat-message[data-role="System"] .chat-bubble {
+            background: var(--chat-system);
+            border-color: rgba(54, 39, 48, 0.35);
+        }
+
+        /* Latency badge */
+        .latency-badge {
+            position: absolute;
+            right: 10px;
+            bottom: 6px;
+            font-size: .8rem;
+            color: var(--gb-blue-800);
+            background: rgba(254, 250, 224, 0.95);
+            border: 1px solid var(--gb-border);
+            border-radius: 10px;
+            padding: 2px 8px;
+            cursor: pointer;
+        }
+
+            .latency-badge:hover {
+                background: rgba(254, 250, 224, 1);
             }
 
-        /* Test local file button styling */
-        #uploadFileBtn.test-local-file-btn {
-            background: linear-gradient(180deg, var(--gb-pink), var(--gb-purple-800));
-            color: #fff;
-        }
-
-            #uploadFileBtn.test-local-file-btn:hover {
-                background: linear-gradient(180deg, var(--gb-pink), var(--gb-purple-800));
+            .latency-badge:focus {
+                outline: 2px solid var(--gb-blue-700);
+                outline-offset: 1px;
             }
 
-        /* Document rows hover */
-        #documentsListContainer .table tbody tr.doc-row:hover {
-            background-color: var(--gb-blue-700);
+        /* Typing bubble */
+        .typing-bubble {
+            display: inline-flex;
+            gap: 6px;
+            align-items: center;
+            justify-content: center;
+            min-width: 56px;
+            padding: 12px 16px;
         }
 
-        /* Zebra stripe for document rows */
-        #documentsListContainer .table tbody tr.doc-row:nth-child(even) {
-            background-color: var(--gb-surface);
+            .typing-bubble .dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: var(--gb-blue-700);
+                opacity: 0.6;
+                animation: blink 1.2s infinite ease-in-out;
+            }
+
+                .typing-bubble .dot:nth-child(2) {
+                    animation-delay: 0.2s;
+                }
+
+                .typing-bubble .dot:nth-child(3) {
+                    animation-delay: 0.4s;
+                }
+
+        @keyframes blink {
+            0%, 80%, 100% {
+                opacity: 0.2;
+                transform: translateY(0);
+            }
+
+            40% {
+                opacity: 1;
+                transform: translateY(-2px);
+            }
+        }
+
+        .expanded + .summary-row > td {
+            background-color: aliceblue;
+        }
+        /* Modal styling for chat details */
+        .modal-content {
+            border-radius: 14px;
+            border: 1px solid var(--gb-border);
+        }
+
+        .modal-header {
+            background: rgba(254, 250, 224, 0.95);
+            border-bottom: 1px solid var(--gb-border);
+        }
+
+        .modal-body pre {
+            white-space: pre-wrap;
+            border-radius: 10px;
+        }
+
+        .md-line {
+            margin-bottom: 8px;
+        }
+
+        .md-label {
+            font-weight: 800;
+            color: var(--gb-blue-800);
+            margin-right: 6px;
+        }
+
+        .md-meta-wrap {
+            margin-top: 10px;
+            padding: 12px;
+            background: rgba(254, 250, 224, 0.85);
+            border: 1px solid var(--gb-border);
+            border-radius: 10px;
+        }
+
+        .md-subtitle {
+            font-weight: 800;
+            color: var(--gb-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            font-size: 0.85rem;
+            margin: 6px 0 8px 0;
+        }
+
+        .token-usage-list {
+            margin: 0 0 8px 0;
+            padding-left: 16px;
+        }
+
+            .token-usage-list li {
+                margin: 2px 0;
+            }
+
+        .refusal-box {
+            border: 2px solid var(--gb-pink);
+            background: #fff5f5;
+            color: #7f1d1d;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-top: 8px;
+            font-weight: 700;
+        }
+
+        .pre-raw {
+            background: #0b1020;
+            color: #e4e8f8;
+            border: 1px solid #1f2a44;
+            padding: 12px;
+            border-radius: 10px;
+            max-height: 420px;
+            overflow: auto;
+        }
+
+        .copy-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Anchor styles for latest assistant message */
+        .chat-message.latest-assistant-anchor[data-role="Assistant"] {
+            display: grid !important;
+            grid-template-columns: 54px;
+            align-items: center;
+        }
+
+            .chat-message.latest-assistant-anchor[data-role="Assistant"] > .chat-bubble {
+                grid-column: 2;
+            }
+
+            .chat-message.latest-assistant-anchor[data-role="Assistant"]::before {
+                content: "";
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                border: 2px solid rgba(254, 250, 224, 0.96);
+                box-shadow: 0 8px 18px rgba(54, 39, 48, 0.35);
+                background-color: #fff;
+                background-image: var(--assistant-avatar-url);
+                background-position: center;
+                background-repeat: no-repeat;
+                background-size: cover;
+                grid-column: 1;
+                justify-self: start;
+            }
+
+        .chat-message.latest-assistant-anchor[data-role="Client"] {
+            display: grid !important;
+            grid-template-columns: 1fr;
+            grid-template-rows: auto auto;
+            justify-items: end;
+        }
+
+            .chat-message.latest-assistant-anchor[data-role="Client"] > .chat-bubble {
+                grid-row: 1;
+            }
+
+            .chat-message.latest-assistant-anchor[data-role="Client"]::after {
+                content: "";
+                width: 75px;
+                height: 75px;
+                border: 2px solid rgba(254, 250, 224, 0.96);
+                box-shadow: 0 6px 50px rgba(54, 39, 48, 0.35);
+                background-color: #fff;
+                background-image: var(--assistant-avatar-thinking-url);
+                background-position: left;
+                background-repeat: no-repeat;
+                background-size: cover;
+                grid-row: 2;
+                margin-top: 6px;
+                margin-right: 90%;
+            }
+
+        /* Welcome message */
+        .welcome-message {
+            text-align: center;
+            color: var(--gb-purple-800);
+            font-size: 1.2rem;
+        }
+
+            .welcome-message h1 {
+                font-size: 2.5rem;
+                margin-bottom: 20px;
+                color: var(--gb-blue-800);
+                text-shadow: 1px 1px 2px rgba(54, 39, 48, 0.5);
+            }
+
+        /* Highlights */
+        .highlight {
+            color: var(--gb-pink);
+            font-weight: bold;
+        }
+
+        .hopeful-gradient {
+            background: linear-gradient(135deg, #63B3ED 0%, #8F5D9C 50%, #E164A7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+        }
+
+        #termsContainer > label {
+            background-color: #6194df !important;
+            padding: 10px;
+            font-size: 1em;
+        }
+
+        #sendButton {
+            margin-left: 10px !important;
+        }
+
+        #addedTermsContainer > .badge {
+            background-color: cadetblue !important;
+            font-size: 1em;
+        }
+        /* Style for term badges with checkboxes */
+        .badge input[type=checkbox] {
+            margin-right: .25rem;
+        }
+
+        #addTermBtn {
+            width: 7em !important;
         }
     </style>
 </head>
@@ -280,14 +577,6 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <!-- Local File Type dropdown -->
-                    <div class="mb-3">
-                        <label for="localFileTypeDropdown" class="form-label">Local File Type</label>
-                        <select id="localFileTypeDropdown" class="form-select custom-local-file-type">
-                            <option value="" selected>Select a local file</option>
-                        </select>
-                    </div>
-
                     <!-- File selection -->
                     <div class="mb-3">
                         <label class="form-label">File</label>
@@ -355,7 +644,6 @@
                         <table class="table table-sm mb-0">
                             <thead>
                                 <tr>
-                                    <th></th> <!-- Icon column -->
                                     <th>Name</th>
                                     <th>Created On</th>
                                     <th>Collection</th>
@@ -367,24 +655,6 @@
                             <tbody id="documentsTableBody"></tbody>
                         </table>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Local File Result Modal -->
-    <div class="modal fade" id="localFileResultModal" tabindex="-1" aria-labelledby="localFileResultModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="localFileResultModalLabel">Local File Result</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" style="max-height:400px; overflow-y:auto;">
-                    <!-- Result content will be inserted here -->
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -439,17 +709,17 @@ $(function () {
     const latency = typeof context.latency === 'number' ? context.latency : null;
 
     $("#chatDetailModalLabel").text(
-      ["Message Details", ...(latency !== null ? [latency.toFixed(2) + "s"] : [])].join(" â€¢ ")
+      ["Message Details", ...(latency !== null ? [latency.toFixed(2) + "s"] : [])].join(" • ")
     );
 
     const displayTimestamp = createdAt
       ? new Date(createdAt).toLocaleString()
       : (context.timestamp ?? new Date().toLocaleString());
 
-    const totalTokens = usage?.TotalTokenCount ?? "â€”";
-    const inTokens = usage?.InputTokenCount ?? "â€”";
-    const outTokens = usage?.OutputTokenCount ?? "â€”";
-    const finish = finishReason != null && String(finishReason).trim() !== "" ? esc(finishReason) : "â€”";
+    const totalTokens = usage?.TotalTokenCount ?? "—";
+    const inTokens = usage?.InputTokenCount ?? "—";
+    const outTokens = usage?.OutputTokenCount ?? "—";
+    const finish = finishReason != null && String(finishReason).trim() !== "" ? esc(finishReason) : "—";
 
     const rawText = JSON.stringify(msgObj, null, 2);
     const uid = `raw${Date.now()}${Math.floor(Math.random() * 1000)}`;
@@ -788,22 +1058,8 @@ $(function () {
     } catch (e) { console.error(e); }
   }
 
-  async function fetchLocalFileTypes() {
-    try {
-      const res = await fetch('/api/Enum/UploadLocalFileType');
-      if (!res.ok) throw new Error('Failed to load local file types');
-      const data = await res.json(); // array of strings
-      const $sel = $('#localFileTypeDropdown');
-      $sel.empty();
-      $sel.append('<option value="" selected>Select a local file</option>');
-      $.each(data, function(index, name){
-        $sel.append(`<option value="${name}">${name}</option>`);
-      });
-    } catch (e) { console.error(e); }
-  }
-
   async function loadInitialData() {
-    await Promise.all([fetchCollections(), fetchCategories(), fetchTerms(), fetchLocalFileTypes()]);
+    await Promise.all([fetchCollections(), fetchCategories(), fetchTerms()]);
   }
 
   // Call on startup
@@ -877,124 +1133,75 @@ $(function () {
     }
   });
 
-  /* Local file type selection change handler */
-  $('#localFileTypeDropdown').on('change', function(){
-    const selected = $(this).val();
-    const $uploadBtn = $('#uploadFileBtn');
-    if (selected && selected !== '') {
-        // Disable other fields
-        $('#chooseFileBtn').prop('disabled', true);
-        $('#uploadFileInput').prop('disabled', true);
-        $('#collectionsDropdown').prop('disabled', true);
-        $('#categoriesDropdown').prop('disabled', true);
-        $('#termsContainer input[type="checkbox"]').prop('disabled', true);
-        $('#addTermBtn').prop('disabled', true);
-        $('#newCollectionInput').prop('disabled', true);
-        $('#newCategoryInput').prop('disabled', true);
-
-        // Update upload button text and style
-        $uploadBtn.text(`Test Local File ${selected}`);
-        $uploadBtn.removeClass('btn-primary'); // remove default gradient
-        $uploadBtn.addClass('test-local-file-btn');
-    } else {
-        // Enable all fields
-        $('#chooseFileBtn').prop('disabled', false);
-        $('#uploadFileInput').prop('disabled', false);
-        $('#collectionsDropdown').prop('disabled', false);
-        $('#categoriesDropdown').prop('disabled', false);
-        $('#termsContainer input[type="checkbox"]').prop('disabled', false);
-        $('#addTermBtn').prop('disabled', false);
-        $('#newCollectionInput').prop('disabled', false);
-        $('#newCategoryInput').prop('disabled', false);
-
-        // Revert upload button text and style
-        $uploadBtn.text('Upload File');
-        $uploadBtn.removeClass('test-local-file-btn');
-    }
-  });
-
-  /* Upload button click */
+  // Upload button click
   $('#uploadFileBtn').on('click', async function(){
-      const localType = $('#localFileTypeDropdown').val();
-      if(localType && localType !== '') {
-          // Test local file
-          try {
-              debugger;
-              const res = await fetch('/api/file/UploadLocalFileType', {method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({localFileName: localType})});
-              if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
-              const resultText = await res.text();
-              // Show popup
-              $('#localFileResultModal').find('.modal-body').html(`<pre class="pre-raw">${esc(resultText)}</pre>`);
-              bootstrap.Modal.getOrCreateInstance(document.getElementById('localFileResultModal')).show();
-          } catch(err){
-              console.error(err);
-              alert(`Upload failed: ${err.message}`);
-          }
-      } else {
-          // Existing file upload logic
-          const file = $fileInput[0].files[0];
-          if (!file) { alert('Please choose a file first.'); return; }
-          if (!/\.txt$/i.test(file.name)) {
-              alert('Only .txt files are allowed.');
-              return;
-          }
+      const file = $fileInput[0].files[0];
+      if (!file) {
+          alert('Please choose a file first.');
+          return;
+      }
+      if (!/\.txt$/i.test(file.name)) {
+          alert('Only .txt files are allowed.');
+          return;
+      }
 
-          const collectionId = $('#collectionsDropdown').val();
-          const categoryId   = $('#categoriesDropdown').val();
+      const collectionId = $('#collectionsDropdown').val();
+      const categoryId   = $('#categoriesDropdown').val();
 
-          const formData = new FormData();
-          formData.append('file', file);
-          formData.append('collectionId', collectionId);
-          formData.append('categoryId', categoryId);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('collectionId', collectionId);
+      formData.append('categoryId', categoryId);
 
-          // New names if provided
-          const newCollectionName = $('#newCollectionInput').val().trim();
-          const newCategoryName   = $('#newCategoryInput').val().trim();
+      // New names if provided
+      const newCollectionName = $('#newCollectionInput').val().trim();
+      const newCategoryName   = $('#newCategoryInput').val().trim();
 
-          if (newCollectionName) {
-             formData.append('newCollectionName', newCollectionName);
-          }
-          if (newCategoryName) {
-             formData.append('newCategoryName', newCategoryName);
-          }
+      if (newCollectionName) {
+         formData.append('newCollectionName', newCollectionName);
+      }
+      if (newCategoryName) {
+         formData.append('newCategoryName', newCategoryName);
+      }
 
-          // Term IDs from checkboxes
-          const termIds = [];
-          $('#termsContainer input[type="checkbox"]:checked').each(function(){
-              termIds.push($(this).val());
-          });
-          if(termIds.length > 0){
-            formData.append('termIds', JSON.stringify(termIds));
-          }
+      // Term IDs from checkboxes
+      const termIds = [];
+      $('#termsContainer input[type="checkbox"]:checked').each(function(){
+          termIds.push($(this).val());
+      });
+      if(termIds.length > 0){
+        formData.append('termIds', JSON.stringify(termIds));
+      }
 
-          // New terms names
-          if(newTermNames.length > 0){
-             formData.append('newTermNames', JSON.stringify(newTermNames));
-          }
+      // New terms names
+      if(newTermNames.length > 0){
+         formData.append('newTermNames', JSON.stringify(newTermNames));
+      }
 
-          const $btn = $(this);
-          $btn.prop('disabled', true);
+      const $btn = $(this);
+      $btn.prop('disabled', true);
 
-          // Show spinner
-          $('#uploadSpinner').removeClass('d-none');
+      // Show spinner
+      $('#uploadSpinner').removeClass('d-none');
 
-          try {
-              const res = await fetch('/api/file/upload', {method: 'POST', body: formData});
-              if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
-              const resultText = await res.text();
-              alert(resultText || 'Upload succeeded');
-              $('#uploadModal').modal('hide');
+      try {
+          const res = await fetch('/api/file/upload', {method: 'POST', body: formData});
+          if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+          const resultText = await res.text();
+          alert(resultText || 'Upload succeeded');
+          $('#uploadModal').modal('hide');
 
-              // Refresh dropdowns and terms
-              await loadInitialData();
-          } catch(err){
-              console.error(err);
-              alert(`Upload failed: ${err.message}`);
-          } finally {
-              $('#uploadSpinner').addClass('d-none');
-              $btn.prop('disabled', false);
-              await loadInitialData();
-          }
+          // Refresh dropdowns and terms
+          debugger;
+          await loadInitialData();
+      } catch(err){
+          console.error(err);
+          alert(`Upload failed: ${err.message}`);
+      } finally {
+          $('#uploadSpinner').addClass('d-none');
+          $btn.prop('disabled', false);
+          debugger;
+          await loadInitialData();
       }
   });
 
@@ -1002,6 +1209,7 @@ $(function () {
   $('#uploadModal').on('hidden.bs.modal', async function(){
 
       await loadInitialData();
+
 
       $fileInput.val('');
       $selectedName.text('');
@@ -1011,6 +1219,12 @@ $(function () {
       if($('#categoriesDropdown').children().length > 0){
           $('#categoriesDropdown').val(0);
       }
+      debugger;
+      $('#categoriesDropdown').selectedIndex = 0;
+      $('#collectionsDropdown').selectedIndex = 0;
+      $('#newTermInput').val('');
+      
+
 
       $('#newCollectionInput').addClass('d-none');
       $('#newCategoryInput').addClass('d-none');
@@ -1019,11 +1233,11 @@ $(function () {
       $('.toggle-btn[data-target="category"]').text('Add');
 
       $('#termsContainer input[type="checkbox"]').prop('checked', false);
+
       $('#addedTermsContainer').empty();
       newTermNames.length = 0;
 
-      // Reset local file type dropdown to default
-      $('#localFileTypeDropdown').val('').trigger('change');
+      await loadInitialData();
   });
 
   /* Documents modal logic */
@@ -1046,9 +1260,10 @@ $(function () {
                 const categoryName   = doc.categoryName || '';
                 const summary = doc.summary || '';
 
+                debugger;
+
                 $tbody.append(`
                     <tr class="doc-row" data-summary="${esc(summary)}">
-                        <td class="expand-icon"><button class="toggle-summary-btn btn btn-sm btn-outline-secondary">+</button></td>
                         <td>${esc(name)}</td>
                         <td>${esc(createdOn)}</td
                         ><td>${esc(collectionName)}</td><td>${esc(categoryName)}</td>
@@ -1058,27 +1273,23 @@ $(function () {
             });
         } catch (e) {
             console.error(e);
-            $tbody.html(`<tr><td colspan="7">Error loading documents.</td></tr>`);
+            $tbody.html(`<tr><td colspan="8">Error loading documents.</td></tr>`);
         }
   });
 
-  /* Toggle summary rows on document click via icon */
-  $('#documentsTableBody').on('click', '.toggle-summary-btn', function(){
-      const $btn = $(this);
-      const $row = $btn.closest('.doc-row');
-      if ($row.hasClass('expanded')) {
-          // collapse
+  /* Toggle summary rows on document click */
+  $('#documentsTableBody').on('click', '.doc-row', function(){
+      debugger;
+      const $row = $(this);
+      if ($row.next('.summary-row').length) {
           $row.next('.summary-row').remove();
           $row.removeClass('expanded');
-          $btn.text('+');
       } else {
-          // expand
           const summaryRaw = $row.data('summary') || '';
           const escapedSummary = esc(summaryRaw);
-          const $summaryRow = $('<tr class="summary-row"><td colspan="7" class="p-2">' + escapedSummary + '</td></tr>');
+          const $summaryRow = $('<tr class="summary-row"><td colspan="6" class="p-2">' + escapedSummary + '</td></tr>');
           $row.after($summaryRow);
           $row.addClass('expanded');
-          $btn.text('-');
       }
   });
 

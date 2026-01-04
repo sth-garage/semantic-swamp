@@ -16,6 +16,16 @@ namespace SemanticSwamp.Shared.DTOs
         public string newTermNames { get; set; } = "";
         public List<string> termIds { get; set; } = new List<string>();
     }
+
+    public class UploadLocalPayload
+    {
+        public string LocalFileName { get; set; }
+    }
+
+    public class DownloadLocalPayload
+    {
+        public int DocumentUploadId { get; set; }
+    }
 }
 
 

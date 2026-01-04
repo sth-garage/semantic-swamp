@@ -16,31 +16,38 @@ public class FileController : ControllerBase
 
     public FileController(SemanticSwampDBContext context, IFileManager fileManager)
     {
-        _context = context; 
+        _context = context;
         _fileManager = fileManager;
     }
 
 
     //// GET api/files/download?filename=example.txt
-    //[HttpGet("download")]
-    //public async Task<IActionResult> Download([FromQuery] string filename)
+    //[HttpGet("DownloadOriginalDocument")]
+    //public async Task<IActionResult> DownloadOriginalDocument([FromQuery] DownloadLocalPayload downloadDocumentPayload)
     //{
     //    // Basic security: Only allow downloading files from a specific folder
-    //    var folder = Path.Combine(Directory.GetCurrentDirectory(), "Files");
-    //    var filePath = Path.Combine(folder, filename);
+    //    var documentUpload = _context.DocumentUploads.FirstOrDefault(x => x.Id == downloadDocumentPayload.DocumentUploadId);
 
-    //    if (!System.IO.File.Exists(filePath))
-    //        return NotFound();
-
-    //    var memory = new MemoryStream();
-    //    using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+    //    if (documentUpload != null)
     //    {
-    //        await stream.CopyToAsync(memory);
+    //        var base64StringData = documentUpload.Base64Data;
+    //        var memory = new MemoryStream();
+    //        using (var memStream = new MemoryStream(Convert.FromBase64String(base64StringData)))
+    //        {
+    //            await memStream.CopyToAsync(memory);
+
+    //        }
+
+    //        memory.Position = 0;
+    //        var contentType = "application/octet-stream";
+    //        return File(memory, contentType, documentUpload.FileName);
     //    }
-    //    memory.Position = 0;
-    //    var contentType = "application/octet-stream";
-    //    return File(memory, contentType, filename);
+    //    else
+    //    {
+    //        return Ok("");
+    //    }
     //}
+
 
 
     [HttpPost("upload")]
@@ -58,7 +65,7 @@ public class FileController : ControllerBase
                 && input.file.Length != 0)
             {
 
-                
+
                 DocumentUpload documentUpload = await _fileManager.ProcessUpload(input);
                 returnMsg = input.file.FileName + " was successfully uploaded";
 
@@ -78,9 +85,10 @@ public class FileController : ControllerBase
     }
 
     [HttpPost("UploadLocalFileType")]
-    public async Task<IActionResult> UploadLocalFileType(string localFileName)
+    public async Task<IActionResult> UploadLocalFileType(UploadLocalPayload localFile)
     {
         var fileType = Enums.LocalFileTypes.Top5Movies;
+        var localFileName = localFile.LocalFileName;
 
         switch (localFileName.ToLowerInvariant())
         {
@@ -101,7 +109,11 @@ public class FileController : ControllerBase
         return Ok(result);
     }
 
+
+
 }
+
+
 
 
 
