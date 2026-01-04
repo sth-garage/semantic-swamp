@@ -1078,7 +1078,10 @@ $(function () {
 
   // Upload button click
   $('#uploadFileBtn').on('click', async function(){
-        const file = $fileInput[0].files[0];
+        
+      const file = $fileInput[0].files[0];
+
+
         if (!file) {
             alert('Please choose a file first.');
             return;
@@ -1134,11 +1137,13 @@ $(function () {
             alert(`Upload failed: ${err.message}`);
         } finally {
             $btn.prop('disabled', false);
+            debugger;
+            await loadInitialData();
         }
   });
 
   /* Reset modal fields when closed */
-  $('#uploadModal').on('hidden.bs.modal', function(){
+  $('#uploadModal').on('hidden.bs.modal', async function(){
       $fileInput.val('');
       $selectedName.text('');
       // Optionally reset dropdowns to first option
@@ -1150,8 +1155,8 @@ $(function () {
       }
 
       // Hide new input fields
-      $('#newCollectionInput').addClass('d-none').val('');
-      $('#newCategoryInput').addClass('d-none').val('');
+      $('#newCollectionInput').removeClass('d-none');
+      $('#newCategoryInput').removeClass('d-none');
 
       $('.toggle-btn[data-target="collection"]').text('Add');
       $('.toggle-btn[data-target="category"]').text('Add');
@@ -1162,6 +1167,9 @@ $(function () {
       // Clear added term tags and array
       $('#addedTermsContainer').empty();
       newTermNames.length = 0;
+
+      // Refresh dropdowns and terms
+        await Promise.all([fetchCollections(), fetchCategories(), fetchTerms()]);
   });
 
   /* Documents modal logic */
