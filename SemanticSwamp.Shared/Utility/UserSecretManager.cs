@@ -32,10 +32,10 @@ namespace SemanticSwamp.Shared.Utility
                     },
                     ConnectionStrings = new ConnectionStrings
                     {
-                        // Data Source=127.0.0.1;Initial Catalog=SemanticSwamp;User Id=semanticSwampServiceLogin;Password=Testing777!!;TrustServerCertificate=True
+                        // dotnet user-secrets set "ConnectionString_SemanticSwamp" "Data Source=127.0.0.1;Initial Catalog=SemanticSwamp;User Id=semanticSwampServiceLogin;Password=Testing777!!;TrustServerCertificate=True;MultipleActiveResultSets=True"
                         ConnectionString_SemanticSwamp = configurationRoot["ConnectionString_SemanticSwamp"] ?? ""
                     }
-                };
+                }; //
             }
 
             return result;

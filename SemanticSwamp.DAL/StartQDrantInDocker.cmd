@@ -1,1 +1,0 @@
-﻿docker run --rm -it -p 6333:6333 -p 6334:6334 -v qdrant-storage:/qdrant/storage qdrant/qdrant:v1.15.3

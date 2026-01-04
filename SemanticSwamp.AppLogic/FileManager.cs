@@ -95,10 +95,6 @@ namespace SemanticSwamp.AppLogic
         {
             //var result = documentUpload;
             List<Term> termsList = new List<Term>();
-            //var inputTerms = fileUploadDTO.newTermNames ?? new List<string>();
-
-            //var inputTermsSplit = fileUploadDTO.newTermNames.Split
-            await _context.SaveChangesAsync();
 
 
             if (fileUploadDTO.termIds != null
@@ -124,25 +120,13 @@ namespace SemanticSwamp.AppLogic
                 {
                     var newTermEntity = new Term()
                     {
-                        Name = newTerm
+                        Name = newTerm.TrimStart('"').TrimEnd('"')
                     };
                     termsList.Add(newTermEntity);
                     _context.Terms.Add(newTermEntity);
                     await _context.SaveChangesAsync();
                 }
             }
-
-            //await _context.SaveChangesAsync();
-
-            //foreach (var term in termsList)
-            //{
-            //    _context.DocumentUploadTerms.Add(new DocumentUploadTerm
-            //    {
-            //        TermId = term.Id,
-            //        DocumentUploadId = result.Id
-            //    });
-
-            //}
 
             return termsList;
 
@@ -157,8 +141,6 @@ namespace SemanticSwamp.AppLogic
 
             return result;
         }
-
-
 
         private async Task<string> GetBase64DataFromFile(IFormFile file)
         {

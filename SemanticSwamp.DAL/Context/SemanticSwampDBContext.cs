@@ -50,6 +50,7 @@ public partial class SemanticSwampDBContext : DbContext
                 .HasMaxLength(500)
                 .IsUnicode(false);
             entity.Property(e => e.IsActive).HasDefaultValue(true, "DF_DocumentUploads_IsActive");
+            entity.Property(e => e.Summary).IsUnicode(false);
 
             entity.HasOne(d => d.Category).WithMany(p => p.DocumentUploads)
                 .HasForeignKey(d => d.CategoryId)
@@ -64,6 +65,11 @@ public partial class SemanticSwampDBContext : DbContext
 
         modelBuilder.Entity<DocumentUploadTerm>(entity =>
         {
+            entity.HasOne(d => d.DocumentUpload).WithMany(p => p.DocumentUploadTerms)
+                .HasForeignKey(d => d.DocumentUploadId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_DocumentUploadTerms_DocumentUploads");
+
             entity.HasOne(d => d.Term).WithMany(p => p.DocumentUploadTerms)
                 .HasForeignKey(d => d.TermId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
