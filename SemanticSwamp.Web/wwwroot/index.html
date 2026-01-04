@@ -149,6 +149,7 @@
         /* Buttons */
         #sendButton.btn,
         #uploadBtn.btn,
+        #uploadFileBtn.btn,
         #documentsBtn.btn {
             background: linear-gradient(180deg, #E164A7, #8F5D9C);
             color: #fff;
@@ -161,6 +162,7 @@
 
             #sendButton.btn:disabled,
             #uploadBtn.btn:disabled,
+            #documentFileBtn.btn:not(:disabled):hover,
             #documentsBtn.btn:disabled {
                 background: rgba(225, 100, 167, 0.35);
                 color: rgba(54, 39, 48, 0.8);
@@ -170,9 +172,11 @@
 
             #sendButton.btn:not(:disabled):hover,
             #uploadBtn.btn:not(:disabled):hover,
+            #uploadFileBtn.btn:not(:disabled):hover,
             #documentsBtn.btn:not(:disabled):hover {
                 background: linear-gradient(180deg, #e87bb3, #9b6ca7);
             }
+
 
         /* Chat message bubble */
         .chat-message {
@@ -474,7 +478,7 @@
                            disabled />
                     <button id="sendButton" class="btn" type="button" disabled>Send</button>
                     <!-- Upload File button -->
-                    <button id="uploadBtn" class="btn ms-2" type="button"
+                    <button id="uploadBtn" class="btn ms-2 " type="button"
                             data-bs-toggle="modal" data-bs-target="#uploadModal" disabled>
                         Upload
                     </button>
@@ -1074,7 +1078,10 @@ $(function () {
 
   // Upload button click
   $('#uploadFileBtn').on('click', async function(){
-        const file = $fileInput[0].files[0];
+        
+      const file = $fileInput[0].files[0];
+
+
         if (!file) {
             alert('Please choose a file first.');
             return;
@@ -1134,7 +1141,7 @@ $(function () {
   });
 
   /* Reset modal fields when closed */
-  $('#uploadModal').on('hidden.bs.modal', function(){
+  $('#uploadModal').on('hidden.bs.modal', async function(){
       $fileInput.val('');
       $selectedName.text('');
       // Optionally reset dropdowns to first option
@@ -1146,8 +1153,8 @@ $(function () {
       }
 
       // Hide new input fields
-      $('#newCollectionInput').addClass('d-none').val('');
-      $('#newCategoryInput').addClass('d-none').val('');
+      $('#newCollectionInput').removeClass('d-none');
+      $('#newCategoryInput').removeClass('d-none');
 
       $('.toggle-btn[data-target="collection"]').text('Add');
       $('.toggle-btn[data-target="category"]').text('Add');
@@ -1158,6 +1165,9 @@ $(function () {
       // Clear added term tags and array
       $('#addedTermsContainer').empty();
       newTermNames.length = 0;
+
+      // Refresh dropdowns and terms
+        await Promise.all([fetchCollections(), fetchCategories(), fetchTerms()]);
   });
 
   /* Documents modal logic */
