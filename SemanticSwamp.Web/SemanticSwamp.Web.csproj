@@ -24,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\SemanticSwamp.AppLogic\SemanticSwamp.AppLogic.csproj" />
     <ProjectReference Include="..\SemanticSwamp.Shared\SemanticSwamp.Shared.csproj" />
     <ProjectReference Include="..\SemanticSwamp.SK\SemanticSwamp.SK.csproj" />
   </ItemGroup>

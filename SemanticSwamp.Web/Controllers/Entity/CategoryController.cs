@@ -2,9 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SemanticSwamp.DAL.Context;
 using SemanticSwamp.DAL.EFModels;
-using SemanticSwamp.Web.DTOs;
-using System.IO;
-using System.Threading.Tasks;
 
 [ApiController]
 [Route("api/[controller]")]

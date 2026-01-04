@@ -84,19 +84,6 @@ public class ChatController : ControllerBase
 
             chatHistory.AddSystemMessage(Prompts.TempSystemPrompt);
 
-            //StringBuilder docUploadsSB = new StringBuilder();
-
-            //foreach (var docUpload in context.DocumentUploads)
-            //{
-            //    docUploadsSB.AppendLine(String.Format("Document Upload Id [{0}] - FileName: [{1}] - Base64Data: [{2}]",
-            //        docUpload.Id,
-            //        docUpload.FileName,
-            //        docUpload.Base64Data));
-            //}
-
-            //chatHistory.AddDeveloperMessage("Document Uploads: " + docUploadsSB.ToString());
-
-
             while (!receiveResult.CloseStatus.HasValue)
             {
                 var bytes = new ArraySegment<byte>(buffer, 0, receiveResult.Count);

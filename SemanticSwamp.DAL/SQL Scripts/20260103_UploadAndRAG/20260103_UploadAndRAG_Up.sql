@@ -1,7 +1,7 @@
 USE SemanticSwamp
 GO
 
-/****** Object:  Table [dbo].[Terms]    Script Date: 1/3/2026 3:06:34 PM ******/
+/****** Object:  Table [dbo].[Terms]    Script Date: 1/3/2026 9:37:36 PM ******/
 SET ANSI_NULLS ON
 GO
 
@@ -9,7 +9,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 CREATE TABLE [dbo].[Terms](
-	[Id] [int] NOT NULL,
+	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[Name] [varchar](2000) NOT NULL,
  CONSTRAINT [PK_Terms] PRIMARY KEY CLUSTERED 
 (

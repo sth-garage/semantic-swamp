@@ -2,42 +2,43 @@
 using Microsoft.AspNetCore.Mvc;
 using SemanticSwamp.DAL.Context;
 using SemanticSwamp.DAL.EFModels;
-using SemanticSwamp.Web.DTOs;
-using System.IO;
-using System.Threading.Tasks;
+using SemanticSwamp.Shared.DTOs;
+using SemanticSwamp.Shared.Interfaces;
 
 [ApiController]
 [Route("api/[controller]")]
 public class FileController : ControllerBase
 {
     private SemanticSwampDBContext _context;
+    private IFileManager _fileManager;
 
-    public FileController(SemanticSwampDBContext context)
+    public FileController(SemanticSwampDBContext context, IFileManager fileManager)
     {
         _context = context; 
+        _fileManager = fileManager;
     }
 
 
-    // GET api/files/download?filename=example.txt
-    [HttpGet("download")]
-    public async Task<IActionResult> Download([FromQuery] string filename)
-    {
-        // Basic security: Only allow downloading files from a specific folder
-        var folder = Path.Combine(Directory.GetCurrentDirectory(), "Files");
-        var filePath = Path.Combine(folder, filename);
+    //// GET api/files/download?filename=example.txt
+    //[HttpGet("download")]
+    //public async Task<IActionResult> Download([FromQuery] string filename)
+    //{
+    //    // Basic security: Only allow downloading files from a specific folder
+    //    var folder = Path.Combine(Directory.GetCurrentDirectory(), "Files");
+    //    var filePath = Path.Combine(folder, filename);
 
-        if (!System.IO.File.Exists(filePath))
-            return NotFound();
+    //    if (!System.IO.File.Exists(filePath))
+    //        return NotFound();
 
-        var memory = new MemoryStream();
-        using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-        {
-            await stream.CopyToAsync(memory);
-        }
-        memory.Position = 0;
-        var contentType = "application/octet-stream";
-        return File(memory, contentType, filename);
-    }
+    //    var memory = new MemoryStream();
+    //    using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+    //    {
+    //        await stream.CopyToAsync(memory);
+    //    }
+    //    memory.Position = 0;
+    //    var contentType = "application/octet-stream";
+    //    return File(memory, contentType, filename);
+    //}
 
 
     [HttpPost("upload")]
@@ -46,7 +47,7 @@ public class FileController : ControllerBase
     {
         var returnMsg = "";
 
-        var existing = _context.DocumentUploads.FirstOrDefault(x => x.IsActive && x.FileName == input.file.FileName);
+        string existing = null; // _context.DocumentUploads.FirstOrDefault(x => x.IsActive && x.FileName == input.file.FileName);
 
         if (existing == null)
         {
@@ -54,68 +55,10 @@ public class FileController : ControllerBase
                 && input.file != null
                 && input.file.Length != 0)
             {
-                var base64Data = await GetBase64DataFromFile(input.file);
 
-                var terms = new List<Term>();
-                var newTerms = input.newTermNames ?? new List<string>();
+                DocumentUpload documentUpload = await _fileManager.ProcessUpload(input);
 
-                Category category = new Category();
-                Collection collection = new Collection();
-                List<Term> termsList = new List<Term>();
-                var termsInputSplit = input.newTermNames ?? new List<string>();
-
-                category = (!String.IsNullOrEmpty(input.newCategoryName))
-                    ? new Category()
-                        {
-                            Name = input.newCategoryName,
-                        }
-                    : _context.Categories.FirstOrDefault(x => x.Id == input.categoryId);
-
-                collection = (!String.IsNullOrEmpty(input.newCollectionName))
-                    ? new Collection()
-                    {
-                        Name = input.newCollectionName,
-                    }
-                    : _context.Collections.FirstOrDefault(x => x.Id == input.collectionId);
-
-                if (input.termIds != null
-                    && input.termIds.Count > 0)
-                {
-                    foreach (var termId in input.termIds)
-                    {
-                        int termIdValue = -1;
-                        Int32.TryParse(termId, out termIdValue);
-                        if (termIdValue > 0)
-                        {
-                            termsList.Add(_context.Terms.FirstOrDefault(x => x.Id.Equals(termIdValue)));
-                        }
-                    }
-                }
-
-                if (termsInputSplit != null
-                    && termsInputSplit.Count > 0)
-                {
-                    foreach(string term in termsInputSplit)
-                    {
-                        termsList.Add(new Term()
-                        {
-                            Name = term,
-                        });
-                    }
-                }
-
-
-                DocumentUpload documentUpload = new DocumentUpload
-                {
-                    Base64Data = base64Data,
-                    FileName = input.file.FileName,
-                    CreatedOn = DateTime.Now,
-                    HasBeenProcessed = false,
-                    IsActive = true
-                };
-
-                _context.DocumentUploads.Add(documentUpload);
-                await _context.SaveChangesAsync();
+                
                 returnMsg = input.file.FileName + " was successfully uploaded";
             }
             else
@@ -131,28 +74,6 @@ public class FileController : ControllerBase
         return Ok(returnMsg);
 
     }
-
-    private async Task<string> GetBase64DataFromFile(IFormFile file)
-    {
-        var bytes = await GetBytesFromIFormFileAsync(file);
-
-        return Convert.ToBase64String(bytes);
-    }
-
-    private async Task<byte[]> GetBytesFromIFormFileAsync(IFormFile file)
-    {
-        if (file == null || file.Length == 0)
-        {
-            return null;
-        }
-
-        using (var stream = new MemoryStream())
-        {
-            await file.CopyToAsync(stream);
-            return stream.ToArray();
-        }
-    }
-
 
 }
 

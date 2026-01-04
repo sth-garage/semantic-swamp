@@ -577,9 +577,7 @@
                                 <tr>
                                     <th>Name</th>
                                     <th>Created On</th>
-                                    <th>Collection ID</th>
                                     <th>Collection</th>
-                                    <th>Category ID</th>
                                     <th>Category</th>
                                     <th>Is Active</th>
                                     <th>Processed</th>
@@ -1172,22 +1170,21 @@ $(function () {
             const data = await res.json();
             $tbody.empty();
             data.forEach(doc => {
-                const name = doc.Name ?? '';
-                const createdOn = doc.CreatedOn ? new Date(doc.CreatedOn).toLocaleString() : '';
-                const collectionId = doc.CollectionId || '';
-                const categoryId   = doc.CategoryId || '';
-                const isActive = doc.IsActive ? 'Yes' : 'No';
-                const processed = doc.HasBeenProcessed ? 'Yes' : 'No';
+                const name = doc.fileName ?? '';
+                const createdOn = doc.createdOn ? new Date(doc.createdOn).toLocaleString() : '';
 
-                const collectionName = (collectionMap[collectionId] !== undefined) ? collectionMap[collectionId] : '';
-                const categoryName   = (categoryMap[categoryId] !== undefined) ? categoryMap[categoryId] : '';
+                const isActive = doc.isActive ? 'Yes' : 'No';
+                const processed = doc.hasBeenProcessed ? 'Yes' : 'No';
+
+                const collectionName = doc.collectionName || '';
+                const categoryName   = doc.categoryName || '';
+
+                debugger;
 
                 $tbody.append(`<tr>
                     <td>${name}</td>
                     <td>${createdOn}</td>
-                    <td>${collectionId}</td>
                     <td>${collectionName}</td>
-                    <td>${categoryId}</td>
                     <td>${categoryName}</td>
                     <td>${isActive}</td>
                     <td>${processed}</td>
