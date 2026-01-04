@@ -19,5 +19,7 @@ namespace SemanticSwamp.Shared.DTOs
         public bool HasBeenProcessed { get; set; }
 
         public string Summary { get; set; }
+
+        public int Id { get; set; }
     }
 }

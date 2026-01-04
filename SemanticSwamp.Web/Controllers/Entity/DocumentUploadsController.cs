@@ -37,7 +37,8 @@ public class DocumentUploadsController : ControllerBase
                 CreatedOn = documentUpload.CreatedOn.ToString("yyyyMMdd_HHmmss"),
                 HasBeenProcessed = documentUpload.HasBeenProcessed,
                 IsActive = documentUpload.IsActive,
-                Summary = documentUpload.Summary
+                Summary = documentUpload.Summary,
+                Id = documentUpload.Id,
             });
         }
 
@@ -45,10 +46,10 @@ public class DocumentUploadsController : ControllerBase
     }
 
     [HttpGet("DownloadOriginalDocument")]
-    public async Task<IActionResult> DownloadOriginalDocument([FromQuery] DownloadLocalPayload downloadDocumentPayload)
+    public async Task<IActionResult> DownloadOriginalDocument([FromQuery] int documentUploadId)
     {
         // Basic security: Only allow downloading files from a specific folder
-        var documentUpload = _context.DocumentUploads.FirstOrDefault(x => x.Id == downloadDocumentPayload.DocumentUploadId);
+        var documentUpload = _context.DocumentUploads.FirstOrDefault(x => x.Id == documentUploadId);
 
         if (documentUpload != null)
         {

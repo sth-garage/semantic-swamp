@@ -1,16 +1,100 @@
+Below is a single HTML/CS/JS file.  
+
+Give each document upload entry on the document uploads modal 
+1. a hover CSS color/style change
+2. a lighter background (close to white) if the item isn't selected
+3. add Id as a new field in the response data and set the id value on the entry but do not display it
+4. A new button for each row - a download icon (use font awesome)
+5. When button 4 is pressed a POST call is made to this method (endpoint is "api/DocumentUpload/DownloadOriginalDocument"):
+
+    [HttpGet("DownloadOriginalDocument")]
+    public async Task<IActionResult> DownloadOriginalDocument([FromQuery] DownloadLocalPayload downloadDocumentPayload)
+    {
+        // Basic security: Only allow downloading files from a specific folder
+        var documentUpload = _context.DocumentUploads.FirstOrDefault(x => x.Id == downloadDocumentPayload.DocumentUploadId);
+
+        if (documentUpload != null)
+        {
+            var base64StringData = documentUpload.Base64Data;
+            var memory = new MemoryStream();
+            using (var memStream = new MemoryStream(Convert.FromBase64String(base64StringData)))
+            {
+                await memStream.CopyToAsync(memory);
+
+            }
+
+            memory.Position = 0;
+            var contentType = "application/octet-stream";
+            return File(memory, contentType, documentUpload.FileName);
+        }
+        else
+        {
+            return Ok("");
+        }
+    }
+
+This is what should happen on the front end when it is called:
+
+        async function downloadOriginalFile(id) {
+            var dataToPass = { "DocumentUploadId": id };
+            try {
+                const response = await fetch(`/api/DocumentUpload/DownloadOriginalDocument`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(dataToPass)
+                });
+                if (!response.ok) {
+                    alert("Failed to download file!");
+                    return;
+                }
+
+                let downloadFilename = '';
+                const disposition = response.headers.get('Content-Disposition');
+                var part1 = disposition.substring(disposition.indexOf('filename') + 9);
+                downloadFilename = part1.substring(0, part1.indexOf(';'))
+                downloadFilename = downloadFilename.replaceAll('"', '')
+                const blob = await response.blob();
+
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = downloadFilename;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 100);
+
+            } catch (err) {
+                alert("Error: " + err);
+            }
+        }
+
+
+
+
+Think hard and make sure the requirements for the functionality are met.
+
+Return a single HTML/CS/JS file - must be valid HTML
+
+
+
+
+----------------------------EXISTING-------------------------------------------
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Semantic Swamp</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Font Awesome CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
         :root {
             /* Gator Bytes vibrant color palette */
@@ -212,16 +296,6 @@
         #documentsListContainer .table tbody tr.doc-row:nth-child(even) {
             background-color: var(--gb-surface);
         }
-
-        /* Default background for all document rows (lighter, close to white) */
-        #documentsListContainer .table tbody tr.doc-row {
-            background-color: var(--gb-surface);
-        }
-
-            /* Selected row highlight */
-            #documentsListContainer .table tbody tr.doc-row.selected {
-                background-color: var(--gb-blue-800);
-            }
     </style>
 </head>
 
@@ -370,8 +444,7 @@
                         <table class="table table-sm mb-0">
                             <thead>
                                 <tr>
-                                    <th></th> <!-- Expand icon -->
-                                    <th></th> <!-- Download icon -->
+                                    <th></th> <!-- Icon column -->
                                     <th>Name</th>
                                     <th>Created On</th>
                                     <th>Collection</th>
@@ -455,17 +528,17 @@ $(function () {
     const latency = typeof context.latency === 'number' ? context.latency : null;
 
     $("#chatDetailModalLabel").text(
-      ["Message Details", ...(latency !== null ? [latency.toFixed(2) + "s"] : [])].join(" â€¢ ")
+      ["Message Details", ...(latency !== null ? [latency.toFixed(2) + "s"] : [])].join(" • ")
     );
 
     const displayTimestamp = createdAt
       ? new Date(createdAt).toLocaleString()
       : (context.timestamp ?? new Date().toLocaleString());
 
-    const totalTokens = usage?.TotalTokenCount ?? "â€”";
-    const inTokens = usage?.InputTokenCount ?? "â€”";
-    const outTokens = usage?.OutputTokenCount ?? "â€”";
-    const finish = finishReason != null && String(finishReason).trim() !== "" ? esc(finishReason) : "â€”";
+    const totalTokens = usage?.TotalTokenCount ?? "—";
+    const inTokens = usage?.InputTokenCount ?? "—";
+    const outTokens = usage?.OutputTokenCount ?? "—";
+    const finish = finishReason != null && String(finishReason).trim() !== "" ? esc(finishReason) : "—";
 
     const rawText = JSON.stringify(msgObj, null, 2);
     const uid = `raw${Date.now()}${Math.floor(Math.random() * 1000)}`;
@@ -822,38 +895,6 @@ $(function () {
     await Promise.all([fetchCollections(), fetchCategories(), fetchTerms(), fetchLocalFileTypes()]);
   }
 
-  async function downloadOriginalFile(id) {
-            var dataToPass = { "DocumentUploadId": id };
-            try {
-                const response = await fetch(`/api/DocumentUploads/DownloadOriginalDocument?documentUploadId=` + id);
-                if (!response.ok) {
-                    alert("Failed to download file!");
-                    return;
-                }
-                debugger;
-                let downloadFilename = '';
-                const disposition = response.headers.get('Content-Disposition');
-                var part1 = disposition.substring(disposition.indexOf('filename') + 9);
-                downloadFilename = part1.substring(0, part1.indexOf(';'))
-                downloadFilename = downloadFilename.replaceAll('"', '')
-                const blob = await response.blob();
-
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = downloadFilename;
-                document.body.appendChild(a);
-                a.click();
-                setTimeout(() => {
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                }, 100);
-
-            } catch (err) {
-                alert("Error: " + err);
-            }
-        }
-
   // Call on startup
   loadInitialData();
 
@@ -967,6 +1008,7 @@ $(function () {
       if(localType && localType !== '') {
           // Test local file
           try {
+              debugger;
               const res = await fetch('/api/file/UploadLocalFileType', {method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({localFileName: localType})});
               if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
               const resultText = await res.text();
@@ -1094,9 +1136,8 @@ $(function () {
                 const summary = doc.summary || '';
 
                 $tbody.append(`
-                    <tr class="doc-row" data-id="${doc.id}" data-summary="${esc(summary)}">
+                    <tr class="doc-row" data-summary="${esc(summary)}">
                         <td class="expand-icon"><button class="toggle-summary-btn btn btn-sm btn-outline-secondary">+</button></td>
-                        <td><button class="download-btn btn btn-sm btn-outline-secondary"><i class="fa-solid fa-download"></i></button></td>
                         <td>${esc(name)}</td>
                         <td>${esc(createdOn)}</td
                         ><td>${esc(collectionName)}</td><td>${esc(categoryName)}</td>
@@ -1127,14 +1168,6 @@ $(function () {
           $row.after($summaryRow);
           $row.addClass('expanded');
           $btn.text('-');
-      }
-  });
-
-  /* Download button click handler */
-  $('#documentsTableBody').on('click', '.download-btn', function(){
-      const id = $(this).closest('.doc-row').data('id');
-      if (id) {
-          downloadOriginalFile(id);
       }
   });
 

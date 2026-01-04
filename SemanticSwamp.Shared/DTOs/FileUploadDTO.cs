@@ -24,7 +24,7 @@ namespace SemanticSwamp.Shared.DTOs
 
     public class DownloadLocalPayload
     {
-        public int DocumentUploadId { get; set; }
+        public int documentUploadId { get; set; }
     }
 }
 
