@@ -37,6 +37,7 @@ public class DocumentUploadsController : ControllerBase
                 CreatedOn = documentUpload.CreatedOn.ToString("yyyyMMdd_HHmmss"),
                 HasBeenProcessed = documentUpload.HasBeenProcessed,
                 IsActive = documentUpload.IsActive,
+                Summary = documentUpload.Summary
             });
         }
 

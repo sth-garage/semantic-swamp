@@ -1,3 +1,31 @@
+Below is a single HTML/CS/JS file.  
+
+1. Add a spinner (using the existing style/color scheme) that displays after the user clicks 'Upload File' and disappears when there is a result.  
+2. Display the checkboxes for existing skills like the badges that appear on added skills but it needs to be checkable
+3. For each document upload entry in the document upload modal, a new piece of data will be returned (doc.Summary)
+
+3 - in this section
+            data.forEach(doc => {
+                const name = doc.fileName ?? '';
+                const summary = doc.summary ?? ''; // New
+				
+4 - If the user clicks on a document upload, a new/hidden section appears underneath with the value of doc.Summary
+
+5 - If the user clicks on a document upload that is displaying doc.Summary, it should collapse it
+
+6 - The document upload modal should always open with all document upload entries collapsed/hidden
+
+7 - Only allow .txt files for the upload file chooser
+
+
+
+
+
+Return a single HTML/CS/JS file - must be valid HTML
+
+----- EXISTING --------
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,7 +54,7 @@
             --chat-system: rgba(54, 39, 48, 0.08);
             --shadow-1: 0 10px 28px rgba(54, 39, 48, 0.10);
             --shadow-2: 0 18px 50px rgba(54, 39, 48, 0.16);
-            --ring-focus: 0 0 3px rgba(225, 100, 167, 0.34);
+            --ring-focus: 0 0 0 3px rgba(225, 100, 167, 0.34);
             --assistant-avatar-url: url(Images/chat.png);
             --assistant-avatar-thinking-url: url(Images/chat-thinking.png)
         }
@@ -125,7 +153,7 @@
         /* Input row */
         .chat-input-row {
             display: flex;
-            gap: 12x;
+            gap: 12px;
             align-items: center;
             padding: 14px;
             border-top: 1px solid var(--gb-border);
@@ -155,7 +183,7 @@
             color: #fff;
             font-weight: 800;
             border-radius: 12px;
-            padding: .62em 1.4em;
+            padding: 0.62em 1.4em;
             border: 1px solid rgba(0, 0, 0, 0.05);
             box-shadow: 0 10px 22px rgba(225, 100, 167, 0.35);
         }
@@ -176,6 +204,7 @@
             #documentsBtn.btn:not(:disabled):hover {
                 background: linear-gradient(180deg, #e87bb3, #9b6ca7);
             }
+
 
         /* Chat message bubble */
         .chat-message {
@@ -227,7 +256,7 @@
             position: absolute;
             right: 10px;
             bottom: 6px;
-            font-size: .8rem;
+            font-size: 0.8rem;
             color: var(--gb-blue-800);
             background: rgba(254, 250, 224, 0.95);
             border: 1px solid var(--gb-border);
@@ -405,7 +434,7 @@
                 width: 75px;
                 height: 75px;
                 border: 2px solid rgba(254, 250, 224, 0.96);
-                box-shadow: 0 6px 50px rgba(54, 39, 48, 0.35);
+                box-shadow: 0 6px 14px rgba(54, 39, 48, 0.35);
                 background-color: #fff;
                 background-image: var(--assistant-avatar-thinking-url);
                 background-position: left;
@@ -442,11 +471,6 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             font-weight: bold;
-        }
-
-        /* Style for term badges with checkboxes */
-        .badge input[type=checkbox] {
-            margin-right: .25rem;
         }
     </style>
 </head>
@@ -561,11 +585,6 @@
                         </div>
                         <div id="addedTermsContainer" class="mt-2"></div>
                     </div>
-
-                    <!-- Spinner -->
-                    <div id="uploadSpinner" class="text-center my-3 d-none">
-                        <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Uploading...</span></div>
-                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -632,7 +651,9 @@ $(function () {
   function enableInputs(state = true) {
     $sendMessage.prop("disabled", !state);
     $sendButton.prop("disabled", !state || $sendMessage.val().trim() === "");
+    // Upload button follows same logic: disabled while waiting for a server reply
     $uploadBtn.prop("disabled", !state || isWaitingReply);
+    // Documents button enabled when inputs are active
     $documentsBtn.prop("disabled", !state);
   }
   function disableInputs() { enableInputs(false); }
@@ -653,17 +674,17 @@ $(function () {
     const latency = typeof context.latency === 'number' ? context.latency : null;
 
     $("#chatDetailModalLabel").text(
-      ["Message Details", ...(latency !== null ? [latency.toFixed(2) + "s"] : [])].join(" â€¢ ")
+      ["Message Details", ...(latency !== null ? [latency.toFixed(2) + "s"] : [])].join(" • ")
     );
 
     const displayTimestamp = createdAt
       ? new Date(createdAt).toLocaleString()
       : (context.timestamp ?? new Date().toLocaleString());
 
-    const totalTokens = usage?.TotalTokenCount ?? "â€”";
-    const inTokens = usage?.InputTokenCount ?? "â€”";
-    const outTokens = usage?.OutputTokenCount ?? "â€”";
-    const finish = finishReason != null && String(finishReason).trim() !== "" ? esc(finishReason) : "â€”";
+    const totalTokens = usage?.TotalTokenCount ?? "—";
+    const inTokens = usage?.InputTokenCount ?? "—";
+    const outTokens = usage?.OutputTokenCount ?? "—";
+    const finish = finishReason != null && String(finishReason).trim() !== "" ? esc(finishReason) : "—";
 
     const rawText = JSON.stringify(msgObj, null, 2);
     const uid = `raw${Date.now()}${Math.floor(Math.random() * 1000)}`;
@@ -676,8 +697,8 @@ $(function () {
         <div class="md-subtitle" style="margin-top:0.25rem;">Token Usage</div>
         <ul class="token-usage-list">
           <li>Total Token Count: ${esc(totalTokens)}</li>
-          <li>Input Token Count: ${esc(inTokens)}</li
-          ><li>Output Token Count: ${esc(outTokens)}</li>
+          <li>Input Token Count: ${esc(inTokens)}</li>
+          <li>Output Token Count: ${esc(outTokens)}</li>
         </ul>
         <div class="md-line"><span class="md-label">Finish Reason:</span>${finish}</div>
       </div>
@@ -711,6 +732,7 @@ $(function () {
         this.textContent = 'Copied!';
         setTimeout(() => { this.textContent = 'Copy'; }, 1200);
       } catch (e) {
+        // Fallback for older browsers
         const pre = $(`#pre-${uid}`)[0];
         const range = document.createRange();
         range.selectNodeContents(pre);
@@ -751,6 +773,7 @@ $(function () {
     if (role !== "Client" && typeof latencySeconds === 'number') {
       const lbl = `${latencySeconds.toFixed(2)} seconds`;
       $bubble.addClass('has-latency');
+      // Latency badge triggers detail modal
       $bubble.append(
         `<button class="latency-badge" type="button"
                 data-latency="${latencySeconds}"
@@ -761,10 +784,12 @@ $(function () {
     $msgEl.append($bubble);
     $chatArea.append($msgEl);
 
+    // Scroll to bottom for assistant/system messages
     if (role !== "Client") {
       $chatArea[0].scrollTop = $chatArea[0].scrollHeight;
     }
 
+    // Mark assistant message as latest anchor
     if (role === "Assistant") {
       setLatestAnchor($msgEl);
     }
@@ -813,6 +838,7 @@ $(function () {
 
       addMessage(obj, false, latencyForThis);
 
+      // Enable inputs after first system greeting
       if (!hasSystemGreeted) {
         hasSystemGreeted = true;
         enableInputs(true);
@@ -845,11 +871,13 @@ $(function () {
     enableInputs(false);
     const $clientMsg = addMessage({ Role: { Label: "Client" }, Items: [{ Text: $('<div/>').text(text).html() }], AuthorName: "Client" }, true);
 
+    // Mark the user's message as anchor (thinking state)
     setLatestAnchor($clientMsg);
 
     socket.send(text);
     $sendMessage.val("");
     setTimeout(() => { $sendMessage.val("").focus(); }, 3000);
+    ;
     $sendButton.prop('disabled', true);
   }
 
@@ -951,18 +979,17 @@ $(function () {
     $.each(termsData, function(index, obj){
       const id = getId(obj);
       const name = getName(obj);
-      // Use badge style with checkbox inside
-      const html = `<label class="badge bg-light border rounded-pill me-2 mb-2 d-inline-flex align-items-center">
-        <input type="checkbox" value="${id}" class="me-1 ms-1"/>
-        ${name}
-      </label>`;
+      const html = `<div class="form-check">
+        <input class="form-check-input" type="checkbox" value="${id}" id="term-${id}">
+        <label class="form-check-label" for="term-${id}">${name}</label>
+      </div>`;
       $termsContainer.append(html);
     });
   }
 
   async function fetchCollections() {
     try {
-      const res = await fetch('/api/collections/simple');
+      const res = await fetch('/api/Collections/Simple');
       if (!res.ok) throw new Error('Failed to load collections');
       const data = await res.json();
       collectionsData = data;
@@ -978,7 +1005,7 @@ $(function () {
 
   async function fetchCategories() {
     try {
-      const res = await fetch('/api/categories/simple');
+      const res = await fetch('/api/Categories/Simple');
       if (!res.ok) throw new Error('Failed to load categories');
       const data = await res.json();
       categoriesData = data;
@@ -994,7 +1021,7 @@ $(function () {
 
   async function fetchTerms() {
     try {
-      const res = await fetch('/api/terms/simple');
+      const res = await fetch('/api/Terms/Simple');
       if (!res.ok) throw new Error('Failed to load terms');
       const data = await res.json();
       termsData = data;
@@ -1079,77 +1106,73 @@ $(function () {
 
   // Upload button click
   $('#uploadFileBtn').on('click', async function(){
+        
       const file = $fileInput[0].files[0];
-      if (!file) {
-          alert('Please choose a file first.');
-          return;
-      }
-      if (!/\.txt$/i.test(file.name)) {
-          alert('Only .txt files are allowed.');
-          return;
-      }
 
-      const collectionId = $('#collectionsDropdown').val();
-      const categoryId   = $('#categoriesDropdown').val();
 
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('collectionId', collectionId);
-      formData.append('categoryId', categoryId);
+        if (!file) {
+            alert('Please choose a file first.');
+            return;
+        }
 
-      // New names if provided
-      const newCollectionName = $('#newCollectionInput').val().trim();
-      const newCategoryName   = $('#newCategoryInput').val().trim();
+        const collectionId = $('#collectionsDropdown').val();
+        const categoryId   = $('#categoriesDropdown').val();
 
-      if (newCollectionName) {
-         formData.append('newCollectionName', newCollectionName);
-      }
-      if (newCategoryName) {
-         formData.append('newCategoryName', newCategoryName);
-      }
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('collectionId', collectionId);
+        formData.append('categoryId', categoryId);
 
-      // Term IDs from checkboxes
-      const termIds = [];
-      $('#termsContainer input[type="checkbox"]:checked').each(function(){
-          termIds.push($(this).val());
-      });
-      if(termIds.length > 0){
-        formData.append('termIds', JSON.stringify(termIds));
-      }
+        // New names if provided
+        const newCollectionName = $('#newCollectionInput').val().trim();
+        const newCategoryName   = $('#newCategoryInput').val().trim();
 
-      // New terms names
-      if(newTermNames.length > 0){
-         formData.append('newTermNames', JSON.stringify(newTermNames));
-      }
+        if (newCollectionName) {
+           formData.append('newCollectionName', newCollectionName);
+        }
+        if (newCategoryName) {
+           formData.append('newCategoryName', newCategoryName);
+        }
 
-      const $btn = $(this);
-      $btn.prop('disabled', true);
+        // Term IDs from checkboxes
+        const termIds = [];
+        $('#termsContainer input[type="checkbox"]:checked').each(function(){
+            termIds.push($(this).val());
+        });
+        if(termIds.length > 0){
+          formData.append('termIds', JSON.stringify(termIds));
+        }
 
-      // Show spinner
-      $('#uploadSpinner').removeClass('d-none');
+        // New terms names
+        if(newTermNames.length > 0){
+           formData.append('newTermNames', JSON.stringify(newTermNames));
+        }
 
-      try {
-          const res = await fetch('/api/file/upload', {method: 'POST', body: formData});
-          if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
-          const resultText = await res.text();
-          alert(resultText || 'Upload succeeded');
-          $('#uploadModal').modal('hide');
+        const $btn = $(this);
+        $btn.prop('disabled', true);
 
-          // Refresh dropdowns and terms
-          await Promise.all([fetchCollections(), fetchCategories(), fetchTerms()]);
-      } catch(err){
-          console.error(err);
-          alert(`Upload failed: ${err.message}`);
-      } finally {
-          $('#uploadSpinner').addClass('d-none');
-          $btn.prop('disabled', false);
-      }
+        try {
+            const res = await fetch('/api/file/upload', {method: 'POST', body: formData});
+            if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+            const resultText = await res.text();
+            alert(resultText || 'Upload succeeded');
+            $('#uploadModal').modal('hide');
+
+            // Refresh dropdowns and terms
+            await Promise.all([fetchCollections(), fetchCategories(), fetchTerms()]);
+        } catch(err){
+            console.error(err);
+            alert(`Upload failed: ${err.message}`);
+        } finally {
+            $btn.prop('disabled', false);
+        }
   });
 
   /* Reset modal fields when closed */
   $('#uploadModal').on('hidden.bs.modal', async function(){
       $fileInput.val('');
       $selectedName.text('');
+      // Optionally reset dropdowns to first option
       if($('#collectionsDropdown').children().length > 0){
           $('#collectionsDropdown').val($('#collectionsDropdown').children().first().val());
       }
@@ -1157,18 +1180,22 @@ $(function () {
           $('#categoriesDropdown').val($('#categoriesDropdown').children().first().val());
       }
 
+      // Hide new input fields
       $('#newCollectionInput').removeClass('d-none');
       $('#newCategoryInput').removeClass('d-none');
 
       $('.toggle-btn[data-target="collection"]').text('Add');
       $('.toggle-btn[data-target="category"]').text('Add');
 
+      // Uncheck all terms
       $('#termsContainer input[type="checkbox"]').prop('checked', false);
 
+      // Clear added term tags and array
       $('#addedTermsContainer').empty();
       newTermNames.length = 0;
 
-      await Promise.all([fetchCollections(), fetchCategories(), fetchTerms()]);
+      // Refresh dropdowns and terms
+        await Promise.all([fetchCollections(), fetchCategories(), fetchTerms()]);
   });
 
   /* Documents modal logic */
@@ -1176,7 +1203,7 @@ $(function () {
         const $tbody = $('#documentsTableBody');
 
         try {
-            const res = await fetch('/api/documentuploads/simple');
+            const res = await fetch('/api/DocumentUploads/Simple');
             if (!res.ok) throw new Error(`Failed to load documents: ${res.status}`);
             const data = await res.json();
             $tbody.empty();
@@ -1189,39 +1216,22 @@ $(function () {
 
                 const collectionName = doc.collectionName || '';
                 const categoryName   = doc.categoryName || '';
-                const summary = doc.summary || '';
 
                 debugger;
 
-                $tbody.append(`
-                    <tr class="doc-row" data-summary="${esc(summary)}">
-                        <td>${esc(name)}</td>
-                        <td>${esc(createdOn)}</td
-                        ><td>${esc(collectionName)}</td><td>${esc(categoryName)}</td>
-                        <td>${isActive}</td>
-                        <td>${processed}</td>
-                    </tr>`);
+                $tbody.append(`<tr>
+                    <td>${name}</td>
+                    <td>${createdOn}</td>
+                    <td>${collectionName}</td>
+                    <td>${categoryName}</td>
+                    <td>${isActive}</td>
+                    <td>${processed}</td>
+                </tr>`);
             });
         } catch (e) {
             console.error(e);
             $tbody.html(`<tr><td colspan="8">Error loading documents.</td></tr>`);
         }
-  });
-
-  /* Toggle summary rows on document click */
-  $('#documentsTableBody').on('click', '.doc-row', function(){
-      debugger;
-      const $row = $(this);
-      if ($row.next('.summary-row').length) {
-          $row.next('.summary-row').remove();
-          $row.removeClass('expanded');
-      } else {
-          const summaryRaw = $row.data('summary') || '';
-          const escapedSummary = esc(summaryRaw);
-          const $summaryRow = $('<tr class="summary-row"><td colspan="6" class="p-2">' + escapedSummary + '</td></tr>');
-          $row.after($summaryRow);
-          $row.addClass('expanded');
-      }
   });
 
 });

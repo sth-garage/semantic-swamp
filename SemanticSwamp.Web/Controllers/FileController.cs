@@ -1,7 +1,9 @@
 ﻿// FilesController.cs
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using SemanticSwamp.DAL.Context;
 using SemanticSwamp.DAL.EFModels;
+using SemanticSwamp.Shared;
 using SemanticSwamp.Shared.DTOs;
 using SemanticSwamp.Shared.Interfaces;
 
@@ -56,6 +58,7 @@ public class FileController : ControllerBase
                 && input.file.Length != 0)
             {
 
+                
                 DocumentUpload documentUpload = await _fileManager.ProcessUpload(input);
 
                 
@@ -75,7 +78,33 @@ public class FileController : ControllerBase
 
     }
 
+    [HttpPost("UploadLocalFileType")]
+    public async Task<IActionResult> UploadLocalFileType(string localFileName)
+    {
+        var fileType = Enums.LocalFileTypes.Top5Movies;
+
+        switch (localFileName.ToLowerInvariant())
+        {
+            case "pg1727_TheOdyssey.txt":
+                fileType = Enums.LocalFileTypes.TheOdyssey;
+                break;
+            case "dirtybird-wikipedia.html":
+                fileType = Enums.LocalFileTypes.SportsHistory;
+                break;
+            case "top5movies.txt":
+            default:
+                fileType = Enums.LocalFileTypes.Top5Movies;
+                break;
+        }
+
+        var result = await _fileManager.GetTextFileSummaryFromPath(fileType);
+
+        return Ok(result);
+    }
+
 }
+
+
 
 
 
