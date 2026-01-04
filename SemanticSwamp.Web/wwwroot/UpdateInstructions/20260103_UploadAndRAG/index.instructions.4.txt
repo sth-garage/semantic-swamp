@@ -17,10 +17,6 @@ Below is a single HTML/CS/JS file.
 
 7 - Only allow .txt files for the upload file chooser
 
-
-
-
-
 Return a single HTML/CS/JS file - must be valid HTML
 
 ----- EXISTING --------
