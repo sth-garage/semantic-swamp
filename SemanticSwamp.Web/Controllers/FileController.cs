@@ -56,6 +56,55 @@ public class FileController : ControllerBase
             {
                 var base64Data = await GetBase64DataFromFile(input.file);
 
+                var terms = new List<Term>();
+                var newTerms = input.newTermNames ?? new List<string>();
+
+                Category category = new Category();
+                Collection collection = new Collection();
+                List<Term> termsList = new List<Term>();
+                var termsInputSplit = input.newTermNames ?? new List<string>();
+
+                category = (!String.IsNullOrEmpty(input.newCategoryName))
+                    ? new Category()
+                        {
+                            Name = input.newCategoryName,
+                        }
+                    : _context.Categories.FirstOrDefault(x => x.Id == input.categoryId);
+
+                collection = (!String.IsNullOrEmpty(input.newCollectionName))
+                    ? new Collection()
+                    {
+                        Name = input.newCollectionName,
+                    }
+                    : _context.Collections.FirstOrDefault(x => x.Id == input.collectionId);
+
+                if (input.termIds != null
+                    && input.termIds.Count > 0)
+                {
+                    foreach (var termId in input.termIds)
+                    {
+                        int termIdValue = -1;
+                        Int32.TryParse(termId, out termIdValue);
+                        if (termIdValue > 0)
+                        {
+                            termsList.Add(_context.Terms.FirstOrDefault(x => x.Id.Equals(termIdValue)));
+                        }
+                    }
+                }
+
+                if (termsInputSplit != null
+                    && termsInputSplit.Count > 0)
+                {
+                    foreach(string term in termsInputSplit)
+                    {
+                        termsList.Add(new Term()
+                        {
+                            Name = term,
+                        });
+                    }
+                }
+
+
                 DocumentUpload documentUpload = new DocumentUpload
                 {
                     Base64Data = base64Data,
