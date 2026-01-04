@@ -1,3 +1,25 @@
+﻿Below is a website file/text that combines HTML/CSS/JS. We need to make some additions/changes.
+
+We want the user to be able to add new collections and categories. So, add a button next to each dropdown (Collection and Category) to signify adding a new collection/category. When pressed, change the respective dropdown into a text field that the user can type in. Allow them to go back to the dropdown as well.
+
+If the user has entered their own collection/category, that text needs to be passed during the upload using 2 new fields - newCollectionName and newCategoryName
+
+There should also be a new scrollable section (multiselect) called "Terms" underneath. Load a list of strings as input and display checkboxes. If the user wants to associate a term to a document (via being checked) then the data also needs to include a new termIds field with the checked Term Ids.
+
+There should also be a button that lets the user add a new Term. They can add multiple new terms. Send these in the upload data as a new field - newTermNames.
+
+Additionally, set the value for 'default' in the dropdowns to 1.
+
+Style the Upload File button better to match the Send button. Change the text to just "Upload"
+
+You MUST maintain all existing functionality. Use the existing styles/schemes when adding or changing elements.
+
+The values for Terms, Collection, and Category need to come from a method. For now it can return static values.
+
+The final output needs to be a single file that combines HTML/CSS/JS and must be a valid HTML file.
+
+- - - - Code - - - -
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -87,7 +109,6 @@
             color: var(--gb-blue-800);
         }
 
-        /* Avatar */
         .avatar {
             width: 38px;
             height: 38px;
@@ -146,10 +167,7 @@
             box-shadow: var(--ring-focus);
         }
 
-        /* Buttons */
-        #sendButton.btn,
-        #uploadBtn.btn,
-        #documentsBtn.btn {
+        #sendButton.btn {
             background: linear-gradient(180deg, #E164A7, #8F5D9C);
             color: #fff;
             font-weight: 800;
@@ -159,22 +177,22 @@
             box-shadow: 0 10px 22px rgba(225, 100, 167, 0.35);
         }
 
-            #sendButton.btn:disabled,
-            #uploadBtn.btn:disabled,
-            #documentsBtn.btn:disabled {
+            #sendButton.btn:disabled {
                 background: rgba(225, 100, 167, 0.35);
                 color: rgba(54, 39, 48, 0.8);
                 box-shadow: none;
                 border-color: rgba(225, 100, 167, 0.55);
             }
 
-            #sendButton.btn:not(:disabled):hover,
-            #uploadBtn.btn:not(:disabled):hover,
-            #documentsBtn.btn:not(:disabled):hover {
+            #sendButton.btn:not(:disabled):hover {
                 background: linear-gradient(180deg, #e87bb3, #9b6ca7);
             }
 
-        /* Chat message bubble */
+            #sendButton.btn:focus {
+                box-shadow: var(--ring-focus);
+            }
+
+        /* Message bubbles */
         .chat-message {
             display: flex;
             margin: 10px 8px;
@@ -362,6 +380,7 @@
         /* Anchor styles for latest assistant message */
         .chat-message.latest-assistant-anchor[data-role="Assistant"] {
             display: grid !important;
+            /*grid-template-columns: 54px 1fr;*/
             grid-template-columns: 54px;
             align-items: center;
         }
@@ -427,6 +446,12 @@
                 text-shadow: 1px 1px 2px rgba(54, 39, 48, 0.5);
             }
 
+            .welcome-message p {
+                font-size: 1.05rem;
+                line-height: 1;
+                margin-bottom: 20px;
+            }
+
         /* Highlights */
         .highlight {
             color: var(--gb-pink);
@@ -473,15 +498,10 @@
                            autocomplete="off"
                            disabled />
                     <button id="sendButton" class="btn" type="button" disabled>Send</button>
-                    <!-- Upload File button -->
-                    <button id="uploadBtn" class="btn ms-2" type="button"
+                    <!-- New Upload File button -->
+                    <button id="uploadBtn" class="btn btn-secondary ms-2" type="button"
                             data-bs-toggle="modal" data-bs-target="#uploadModal" disabled>
-                        Upload
-                    </button>
-                    <!-- Documents button -->
-                    <button id="documentsBtn" class="btn ms-2" type="button"
-                            data-bs-toggle="modal" data-bs-target="#documentsModal" disabled>
-                        Documents
+                        Upload File
                     </button>
                 </div>
             </section>
@@ -506,7 +526,7 @@
 
     <!-- Upload File Modal -->
     <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" style="margin-top: 30px;">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="uploadModalLabel">Upload File</h5>
@@ -524,71 +544,18 @@
                     <!-- Collections dropdown -->
                     <div class="mb-3">
                         <label for="collectionsDropdown" class="form-label">Collections</label>
-                        <div id="collectionSelectionWrapper" class="d-flex align-items-center">
-                            <select class="form-select me-2" id="collectionsDropdown"></select>
-                            <input type="text" class="form-control d-none me-2" id="newCollectionInput" placeholder="New Collection Name">
-                            <button type="button" class="btn btn-outline-secondary toggle-btn" data-target="collection">Add</button>
-                        </div>
+                        <select class="form-select" id="collectionsDropdown"></select>
                     </div>
 
                     <!-- Categories dropdown -->
                     <div class="mb-3">
                         <label for="categoriesDropdown" class="form-label">Categories</label>
-                        <div id="categorySelectionWrapper" class="d-flex align-items-center">
-                            <select class="form-select me-2" id="categoriesDropdown"></select>
-                            <input type="text" class="form-control d-none me-2" id="newCategoryInput" placeholder="New Category Name">
-                            <button type="button" class="btn btn-outline-secondary toggle-btn" data-target="category">Add</button>
-                        </div>
-                    </div>
-
-                    <!-- Terms multiselect -->
-                    <div class="mb-3">
-                        <label class="form-label">Terms</label>
-                        <div id="termsContainer" style="max-height:150px; overflow-y:auto;">
-                            <!-- checkboxes will be inserted here -->
-                        </div>
-                        <div class="d-flex align-items-center mt-2">
-                            <input type="text" id="newTermInput" class="form-control me-2" placeholder="New term name">
-                            <button type="button" id="addTermBtn" class="btn btn-outline-primary">Add Term</button>
-                        </div>
-                        <div id="addedTermsContainer" class="mt-2"></div>
+                        <select class="form-select" id="categoriesDropdown"></select>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" id="uploadFileBtn" class="btn">Upload File</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Documents Modal -->
-    <div class="modal fade" id="documentsModal" tabindex="-1" aria-labelledby="documentsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="documentsModalLabel">Document Uploads</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="documentsListContainer" style="max-height:400px;overflow-y:auto;">
-                        <table class="table table-sm mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Created On</th>
-                                    <th>Collection</th>
-                                    <th>Category</th>
-                                    <th>Is Active</th>
-                                    <th>Processed</th>
-                                </tr>
-                            </thead>
-                            <tbody id="documentsTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" id="uploadFileBtn" class="btn btn-primary">Upload File</button>
                 </div>
             </div>
         </div>
@@ -601,9 +568,9 @@ $(function () {
   const $chatArea = $("#chatArea");
   const $sendMessage = $("#sendMessage");
   const $sendButton = $("#sendButton");
-  const $uploadBtn   = $("#uploadBtn");
-  const $documentsBtn = $("#documentsBtn");
+  const $uploadBtn   = $("#uploadBtn"); // new button
 
+  // Class name for the latest assistant message anchor (used to keep it visible)
   const LATEST_ANCHOR_CLASS = "latest-assistant-anchor";
 
   /* Connection and state variables */
@@ -616,13 +583,12 @@ $(function () {
   const userInputHistory = [];          // history array for arrow key navigation
   let userInputIndex = -1;
 
+  /* Enable or disable the input controls */
   function enableInputs(state = true) {
     $sendMessage.prop("disabled", !state);
     $sendButton.prop("disabled", !state || $sendMessage.val().trim() === "");
     // Upload button follows same logic: disabled while waiting for a server reply
     $uploadBtn.prop("disabled", !state || isWaitingReply);
-    // Documents button enabled when inputs are active
-    $documentsBtn.prop("disabled", !state);
   }
   function disableInputs() { enableInputs(false); }
 
@@ -871,18 +837,18 @@ $(function () {
   });
 
   /* Click on latency badge to view details */
-  $(document).on('click', '.latency-badge', function(e){
+  $(document).on('click', '.latency-badge', function (e) {
     e.stopPropagation();
     const $badge = $(this);
     const $msg = $badge.closest('.chat-message');
     const msgObj = $msg.data('chatMessage') || {};
     const latency = parseFloat($badge.attr('data-latency'));
-    buildMessageDetailHTML(msgObj, {latency});
+    buildMessageDetailHTML(msgObj, { latency });
     bootstrap.Modal.getOrCreateInstance(document.getElementById('chatDetailModal')).show();
   });
 
   /* Keyboard accessibility for latency badge */
-  $(document).on('keydown', '.latency-badge', function(e){
+  $(document).on('keydown', '.latency-badge', function (e) {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       $(this).trigger('click');
@@ -904,9 +870,9 @@ $(function () {
 
   /* Wrap original addMessage to include visibility logic */
   const origAddMessage = addMessage;
-  addMessage = function(...args){
-    const result = origAddMessage.apply(this,args);
-    setTimeout(ensureLatestAnchorVisible,0);
+  addMessage = function (...args) {
+    const result = origAddMessage.apply(this, args);
+    setTimeout(ensureLatestAnchorVisible, 0); // allow DOM update
     return result;
   };
 
@@ -915,144 +881,21 @@ $(function () {
 
   /* ------- Upload Modal Logic -------- */
 
-  // New array to store names of new terms
-  const newTermNames = [];
-
-  // Global data arrays and maps for collections, categories, terms
-  let collectionsData = [];
-  let categoriesData = [];
-  let termsData = [];
-  const collectionMap = {}; // id->name
-  const categoryMap = {};
-
-  function getId(obj){ return obj.id ?? obj.Id ?? obj.ID; }
-  function getName(obj){ return obj.name ?? obj.Name ?? obj.Term ?? ''; }
+  // Sample collections and categories arrays (start with 'default')
+  const collections = ['default'];
+  const categories  = ['default'];
 
   function populateSelect(selector, array) {
     const $sel = $(selector);
     $sel.empty();
-    $.each(array, function(index, obj){
-      const id = getId(obj);
-      const name = getName(obj);
-      $sel.append(`<option value="${id}">${name}</option>`);
-    });
-    if ($sel.children().length > 0) {
-      $sel.val($sel.children().first().val());
-    }
-  }
-
-  function populateTerms() {
-    const $termsContainer = $('#termsContainer');
-    $termsContainer.empty();
-    $.each(termsData, function(index, obj){
-      const id = getId(obj);
-      const name = getName(obj);
-      const html = `<div class="form-check">
-        <input class="form-check-input" type="checkbox" value="${id}" id="term-${id}">
-        <label class="form-check-label" for="term-${id}">${name}</label>
-      </div>`;
-      $termsContainer.append(html);
+    $.each(array, function(index, value){
+      $sel.append(`<option value="${index}">${value}</option>`);
     });
   }
 
-  async function fetchCollections() {
-    try {
-      const res = await fetch('/api/Collections/Simple');
-      if (!res.ok) throw new Error('Failed to load collections');
-      const data = await res.json();
-      collectionsData = data;
-      Object.keys(collectionMap).forEach(k=>delete collectionMap[k]);
-      data.forEach(obj=>{
-        const id = getId(obj);
-        const name = getName(obj);
-        collectionMap[id] = name;
-      });
-      populateSelect('#collectionsDropdown', collectionsData);
-    } catch (e) { console.error(e); }
-  }
-
-  async function fetchCategories() {
-    try {
-      const res = await fetch('/api/Categories/Simple');
-      if (!res.ok) throw new Error('Failed to load categories');
-      const data = await res.json();
-      categoriesData = data;
-      Object.keys(categoryMap).forEach(k=>delete categoryMap[k]);
-      data.forEach(obj=>{
-        const id = getId(obj);
-        const name = getName(obj);
-        categoryMap[id] = name;
-      });
-      populateSelect('#categoriesDropdown', categoriesData);
-    } catch (e) { console.error(e); }
-  }
-
-  async function fetchTerms() {
-    try {
-      const res = await fetch('/api/Terms/Simple');
-      if (!res.ok) throw new Error('Failed to load terms');
-      const data = await res.json();
-      termsData = data;
-      populateTerms();
-    } catch (e) { console.error(e); }
-  }
-
-  async function loadInitialData() {
-    await Promise.all([fetchCollections(), fetchCategories(), fetchTerms()]);
-  }
-
-  // Call on startup
-  loadInitialData();
-
-  /* Toggle between dropdown and text input for collection/category */
-  $(document).on('click', '.toggle-btn', function(){
-    const target = $(this).data('target');
-    if(target === 'collection'){
-       const $select = $('#collectionsDropdown');
-       const $input = $('#newCollectionInput');
-       const $btn = $(this);
-       if($select.is(':visible')){
-          $select.addClass('d-none');
-          $input.removeClass('d-none').focus();
-          $btn.text('Back');
-       } else {
-          $select.removeClass('d-none');
-          $input.addClass('d-none').val('');
-          $btn.text('Add');
-       }
-    } else if(target === 'category'){
-       const $select = $('#categoriesDropdown');
-       const $input = $('#newCategoryInput');
-       const $btn = $(this);
-       if($select.is(':visible')){
-          $select.addClass('d-none');
-          $input.removeClass('d-none').focus();
-          $btn.text('Back');
-       } else {
-          $select.removeClass('d-none');
-          $input.addClass('d-none').val('');
-          $btn.text('Add');
-       }
-    }
-  });
-
-  /* Add new term button logic */
-  $('#addTermBtn').on('click', function(){
-      const termName = $('#newTermInput').val().trim();
-      if(!termName) return;
-      newTermNames.push(termName);
-      // create badge with remove option
-      const $badge = $('<span>').addClass('badge bg-secondary me-1 mb-1').text(termName + ' ');
-      const $removeBtn = $('<button type="button" class="btn-close btn-close-white ms-1 p-0"></button>');
-      $removeBtn.on('click', function(){
-          const idx = newTermNames.indexOf(termName);
-          if(idx !== -1) newTermNames.splice(idx, 1);
-          $(this).parent().remove();
-      });
-      $badge.append($removeBtn);
-      $('#addedTermsContainer').append($badge);
-      $('#newTermInput').val('');
-  });
+  // Populate dropdowns on page load
+  populateSelect('#collectionsDropdown', collections);
+  populateSelect('#categoriesDropdown', categories);
 
   // File selection handling
   const $chooseFileBtn = $('#chooseFileBtn');
@@ -1073,129 +916,50 @@ $(function () {
   });
 
   // Upload button click
-  $('#uploadFileBtn').on('click', async function(){
-        const file = $fileInput[0].files[0];
-        if (!file) {
-            alert('Please choose a file first.');
-            return;
-        }
+  $('#uploadFileBtn').on('click', function(){
+    const file = $fileInput[0].files[0];
+    if (!file) {
+      alert('Please choose a file first.');
+      return;
+    }
 
-        const collectionId = $('#collectionsDropdown').val();
-        const categoryId   = $('#categoriesDropdown').val();
+    const collectionId = parseInt($('#collectionsDropdown').val(), 10);
+    const categoryId   = parseInt($('#categoriesDropdown').val(), 10);
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('collectionId', collectionId);
-        formData.append('categoryId', categoryId);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('collectionId', collectionId);
+    formData.append('categoryId', categoryId);
 
-        // New names if provided
-        const newCollectionName = $('#newCollectionInput').val().trim();
-        const newCategoryName   = $('#newCategoryInput').val().trim();
+    const $btn = $(this);
+    $btn.prop('disabled', true);
 
-        if (newCollectionName) {
-           formData.append('newCollectionName', newCollectionName);
-        }
-        if (newCategoryName) {
-           formData.append('newCategoryName', newCategoryName);
-        }
-
-        // Term IDs from checkboxes
-        const termIds = [];
-        $('#termsContainer input[type="checkbox"]:checked').each(function(){
-            termIds.push($(this).val());
-        });
-        if(termIds.length > 0){
-          formData.append('termIds', JSON.stringify(termIds));
-        }
-
-        // New terms names
-        if(newTermNames.length > 0){
-           formData.append('newTermNames', JSON.stringify(newTermNames));
-        }
-
-        const $btn = $(this);
-        $btn.prop('disabled', true);
-
-        try {
-            const res = await fetch('/api/file/upload', {method: 'POST', body: formData});
-            if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
-            const resultText = await res.text();
-            alert(resultText || 'Upload succeeded');
-            $('#uploadModal').modal('hide');
-
-            // Refresh dropdowns and terms
-            await Promise.all([fetchCollections(), fetchCategories(), fetchTerms()]);
-        } catch(err){
-            console.error(err);
-            alert(`Upload failed: ${err.message}`);
-        } finally {
-            $btn.prop('disabled', false);
-        }
+    fetch('/api/file/upload', {
+      method: 'POST',
+      body: formData
+    })
+    .then(r => r.ok ? r.text() : Promise.reject(r))
+    .then(text => {
+      alert('Upload succeeded');
+      $('#uploadModal').modal('hide');
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Upload failed.');
+    })
+    .finally(() => {
+      $btn.prop('disabled', false);
+    });
   });
 
-  /* Reset modal fields when closed */
+  // Reset modal fields when closed
   $('#uploadModal').on('hidden.bs.modal', function(){
-      $fileInput.val('');
-      $selectedName.text('');
-      // Optionally reset dropdowns to first option
-      if($('#collectionsDropdown').children().length > 0){
-          $('#collectionsDropdown').val($('#collectionsDropdown').children().first().val());
-      }
-      if($('#categoriesDropdown').children().length > 0){
-          $('#categoriesDropdown').val($('#categoriesDropdown').children().first().val());
-      }
-
-      // Hide new input fields
-      $('#newCollectionInput').addClass('d-none').val('');
-      $('#newCategoryInput').addClass('d-none').val('');
-
-      $('.toggle-btn[data-target="collection"]').text('Add');
-      $('.toggle-btn[data-target="category"]').text('Add');
-
-      // Uncheck all terms
-      $('#termsContainer input[type="checkbox"]').prop('checked', false);
-
-      // Clear added term tags and array
-      $('#addedTermsContainer').empty();
-      newTermNames.length = 0;
+    $fileInput.val('');
+    $selectedName.text('');
+    // Optionally reset dropdowns to first option
+    $('#collectionsDropdown').val(0);
+    $('#categoriesDropdown').val(0);
   });
-
-  /* Documents modal logic */
-  $('#documentsBtn').on('click', async function(){
-        const $tbody = $('#documentsTableBody');
-
-        try {
-            const res = await fetch('/api/DocumentUploads/Simple');
-            if (!res.ok) throw new Error(`Failed to load documents: ${res.status}`);
-            const data = await res.json();
-            $tbody.empty();
-            data.forEach(doc => {
-                const name = doc.fileName ?? '';
-                const createdOn = doc.createdOn || '';
-
-                const isActive = doc.isActive ? 'Yes' : 'No';
-                const processed = doc.hasBeenProcessed ? 'Yes' : 'No';
-
-                const collectionName = doc.collectionName || '';
-                const categoryName   = doc.categoryName || '';
-
-                debugger;
-
-                $tbody.append(`<tr>
-                    <td>${name}</td>
-                    <td>${createdOn}</td>
-                    <td>${collectionName}</td>
-                    <td>${categoryName}</td>
-                    <td>${isActive}</td>
-                    <td>${processed}</td>
-                </tr>`);
-            });
-        } catch (e) {
-            console.error(e);
-            $tbody.html(`<tr><td colspan="8">Error loading documents.</td></tr>`);
-        }
-  });
-
 });
     </script>
 </body>

@@ -3,12 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 using SemanticSwamp.DAL.Context;
 using SemanticSwamp.Shared.Models;
 using SemanticSwamp.SK.Plugins;
 #pragma warning disable SKEXP0010
 #pragma warning disable SKEXP0001
+#pragma warning disable SKEXP0050
+
 
 namespace SemanticSwamp.SK
 {
@@ -37,6 +38,7 @@ namespace SemanticSwamp.SK
 
             // Plugins
             skBuilder.Plugins.AddFromType<DocumentUploadPlugin>();
+
 
             // Build the kernel
             Kernel kernel = skBuilder.Build();

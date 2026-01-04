@@ -10,10 +10,13 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.KernelMemory.Abstractions" Version="0.98.250508.3" />
     <PackageReference Include="Microsoft.KernelMemory.AI.OpenAI" Version="0.98.250508.3" />
-    <PackageReference Include="Microsoft.SemanticKernel.Agents.OpenAI" Version="1.68.0-preview" />
-    <PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.68.0-preview" />
-    <PackageReference Include="Microsoft.SemanticKernel.Plugins.Memory" Version="1.68.0-alpha" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="Microsoft.SemanticKernel.Agents.OpenAI" Version="1.61.0-preview" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.InMemory" Version="1.61.0-preview" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.61.0-preview" />
+    <PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.61.0-preview" />
+    <PackageReference Include="Microsoft.SemanticKernel.Plugins.Memory" Version="1.61.0-alpha" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.5-beta1" />
+    <PackageReference Include="SmartComponents.LocalEmbeddings.SemanticKernel" Version="0.1.0-preview10148" />
   </ItemGroup>
 
   <ItemGroup>
@@ -21,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\SemanticSwamp.AppLogic\SemanticSwamp.AppLogic.csproj" />
     <ProjectReference Include="..\SemanticSwamp.Shared\SemanticSwamp.Shared.csproj" />
     <ProjectReference Include="..\SemanticSwamp.SK\SemanticSwamp.SK.csproj" />
   </ItemGroup>

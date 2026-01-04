@@ -5,6 +5,8 @@ using SemanticSwamp.Shared.Models;
 using SemanticSwamp.Shared.Utility;
 using SemanticSwamp.SK;
 using SemanticSwamp.DAL.Context;
+using SemanticSwamp.Shared.Interfaces;
+using SemanticSwamp.AppLogic;
 
 #pragma warning disable SKEXP0010
 #pragma warning disable SKEXP0001
@@ -30,6 +32,7 @@ webBuilder.Services.AddDbContext<SemanticSwampDBContext>(options =>
 webBuilder.Services.AddSingleton<IChatCompletionService>(semanticKernelBuildResult.AIServices.ChatCompletionService);
 webBuilder.Services.AddSingleton<Kernel>(semanticKernelBuildResult.AIServices.Kernel);
 webBuilder.Services.AddSingleton<ConfigurationValues>(configValues);
+webBuilder.Services.AddScoped(typeof(IFileManager), typeof(FileManager));
 
 var app = webBuilder.Build();
 

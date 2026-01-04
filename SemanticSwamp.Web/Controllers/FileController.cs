@@ -1,33 +1,83 @@
 ﻿// FilesController.cs
 using Microsoft.AspNetCore.Mvc;
-using System.IO;
-using System.Threading.Tasks;
+using SemanticSwamp.DAL.Context;
+using SemanticSwamp.DAL.EFModels;
+using SemanticSwamp.Shared.DTOs;
+using SemanticSwamp.Shared.Interfaces;
 
 [ApiController]
 [Route("api/[controller]")]
 public class FileController : ControllerBase
 {
-    // GET api/files/download?filename=example.txt
-    [HttpGet("download")]
-    public async Task<IActionResult> Download([FromQuery] string filename)
+    private SemanticSwampDBContext _context;
+    private IFileManager _fileManager;
+
+    public FileController(SemanticSwampDBContext context, IFileManager fileManager)
     {
-        // Basic security: Only allow downloading files from a specific folder
-        var folder = Path.Combine(Directory.GetCurrentDirectory(), "Files");
-        var filePath = Path.Combine(folder, filename);
-
-        if (!System.IO.File.Exists(filePath))
-            return NotFound();
-
-        var memory = new MemoryStream();
-        using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-        {
-            await stream.CopyToAsync(memory);
-        }
-        memory.Position = 0;
-        var contentType = "application/octet-stream";
-        return File(memory, contentType, filename);
+        _context = context; 
+        _fileManager = fileManager;
     }
+
+
+    //// GET api/files/download?filename=example.txt
+    //[HttpGet("download")]
+    //public async Task<IActionResult> Download([FromQuery] string filename)
+    //{
+    //    // Basic security: Only allow downloading files from a specific folder
+    //    var folder = Path.Combine(Directory.GetCurrentDirectory(), "Files");
+    //    var filePath = Path.Combine(folder, filename);
+
+    //    if (!System.IO.File.Exists(filePath))
+    //        return NotFound();
+
+    //    var memory = new MemoryStream();
+    //    using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+    //    {
+    //        await stream.CopyToAsync(memory);
+    //    }
+    //    memory.Position = 0;
+    //    var contentType = "application/octet-stream";
+    //    return File(memory, contentType, filename);
+    //}
+
+
+    [HttpPost("upload")]
+    public async Task<IActionResult> Upload(FileUploadDTO input)
+
+    {
+        var returnMsg = "";
+
+        string existing = null; // _context.DocumentUploads.FirstOrDefault(x => x.IsActive && x.FileName == input.file.FileName);
+
+        if (existing == null)
+        {
+            if (input != null
+                && input.file != null
+                && input.file.Length != 0)
+            {
+
+                DocumentUpload documentUpload = await _fileManager.ProcessUpload(input);
+
+                
+                returnMsg = input.file.FileName + " was successfully uploaded";
+            }
+            else
+            {
+                returnMsg = "There was a problem with the input file or type provided";
+            }
+        }
+        else
+        {
+            returnMsg = input.file.FileName + " has already been added";
+        }
+
+        return Ok(returnMsg);
+
+    }
+
 }
+
+
 
 
 /*
