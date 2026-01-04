@@ -60,9 +60,8 @@ public class FileController : ControllerBase
 
                 
                 DocumentUpload documentUpload = await _fileManager.ProcessUpload(input);
-
-                
                 returnMsg = input.file.FileName + " was successfully uploaded";
+
             }
             else
             {

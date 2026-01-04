@@ -130,18 +130,7 @@ namespace SemanticSwamp.AppLogic
                 FileInfo fi = new FileInfo(path);
 
 
-                if (System.IO.File.Exists(path))
-                {
-
-                    var fileBytes = File.ReadAllBytes(path);
-                    var base64Data = Convert.ToBase64String(fileBytes);
-                    var summary = await GetTextSummary(base64Data);
-                    result = summary;
-                }
-                else
-                {
-                    result = "Error finding file";
-                }
+                return await GetTextFileSummaryFromPath(fi);
             }
             catch(Exception ex)
             {
@@ -169,7 +158,7 @@ namespace SemanticSwamp.AppLogic
 
                 var reply = await _chatCompletionService.GetChatMessageContentAsync(chatHistory);
 
-                result = reply.Content;
+                 result = reply.Content;
             }
             catch (Exception ex)
             {
