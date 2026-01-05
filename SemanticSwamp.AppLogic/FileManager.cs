@@ -107,8 +107,6 @@ namespace SemanticSwamp.AppLogic
             var result = "";
             try
             {
-
-
                     var fileBytes = File.ReadAllBytes(fi.FullName);
                     var base64Data = Convert.ToBase64String(fileBytes);
                     var summary = await GetTextSummary(base64Data);
