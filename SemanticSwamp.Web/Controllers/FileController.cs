@@ -1,7 +1,9 @@
 ﻿// FilesController.cs
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using SemanticSwamp.DAL.Context;
 using SemanticSwamp.DAL.EFModels;
+using SemanticSwamp.Shared;
 using SemanticSwamp.Shared.DTOs;
 using SemanticSwamp.Shared.Interfaces;
 
@@ -14,31 +16,9 @@ public class FileController : ControllerBase
 
     public FileController(SemanticSwampDBContext context, IFileManager fileManager)
     {
-        _context = context; 
+        _context = context;
         _fileManager = fileManager;
     }
-
-
-    //// GET api/files/download?filename=example.txt
-    //[HttpGet("download")]
-    //public async Task<IActionResult> Download([FromQuery] string filename)
-    //{
-    //    // Basic security: Only allow downloading files from a specific folder
-    //    var folder = Path.Combine(Directory.GetCurrentDirectory(), "Files");
-    //    var filePath = Path.Combine(folder, filename);
-
-    //    if (!System.IO.File.Exists(filePath))
-    //        return NotFound();
-
-    //    var memory = new MemoryStream();
-    //    using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-    //    {
-    //        await stream.CopyToAsync(memory);
-    //    }
-    //    memory.Position = 0;
-    //    var contentType = "application/octet-stream";
-    //    return File(memory, contentType, filename);
-    //}
 
 
     [HttpPost("upload")]
@@ -56,10 +36,10 @@ public class FileController : ControllerBase
                 && input.file.Length != 0)
             {
 
-                DocumentUpload documentUpload = await _fileManager.ProcessUpload(input);
 
-                
+                DocumentUpload documentUpload = await _fileManager.ProcessUpload(input);
                 returnMsg = input.file.FileName + " was successfully uploaded";
+
             }
             else
             {
@@ -75,59 +55,31 @@ public class FileController : ControllerBase
 
     }
 
-}
+    [HttpPost("UploadLocalFileType")]
+    public async Task<IActionResult> UploadLocalFileType(UploadLocalPayload localFile)
+    {
+        var fileType = Enums.LocalFileTypes.Top5Movies;
+        var localFileName = localFile.LocalFileName;
 
-
-
-
-/*
- * <!DOCTYPE html>
-<html>
-<head>
-    <title>Download File via Fetch</title>
-</head>
-<body>
-    <button id="downloadBtn">Download File via JS</button>
-
-<script>
-document.getElementById('downloadBtn').addEventListener('click', async () => {
-    const filename = "example.txt"; // change as needed
-    try {
-        // Fetch the file. Adjust the URL as needed for your API.
-        const response = await fetch(`/api/files/download?filename=${encodeURIComponent(filename)}`);
-        if (!response.ok) {
-            alert("Failed to download file!");
-            return;
+        switch (localFileName.ToLowerInvariant())
+        {
+            case "theodyssey":
+                fileType = Enums.LocalFileTypes.TheOdyssey;
+                break;
+            case "sportshistory":
+                fileType = Enums.LocalFileTypes.SportsHistory;
+                break;
+            case "top5movies":
+            default:
+                fileType = Enums.LocalFileTypes.Top5Movies;
+                break;
         }
 
-        // Get filename from the Content-Disposition header if present
-        let downloadFilename = filename;
-        const disposition = response.headers.get('Content-Disposition');
-        if (disposition && disposition.indexOf('filename=') !== -1) {
-            let match = disposition.match(/filename="?([^"]+)"?/);
-            if (match && match[1]) downloadFilename = match[1];
-        }
+        var result = await _fileManager.GetTextFileSummaryFromPath(fileType);
 
-        // Convert response to Blob
-        const blob = await response.blob();
-
-        // For modern browsers: create a link and trigger click
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = downloadFilename;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        }, 100);
-
-    } catch (err) {
-        alert("Error: " + err);
+        return Ok(result);
     }
-});
-</script>
-</body>
-</html>
- */
+
+
+
+}

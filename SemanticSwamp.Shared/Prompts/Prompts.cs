@@ -16,10 +16,9 @@ namespace SemanticSwamp.Shared.Prompts
 
         public const string TempSystemPrompt = @"
 “You are Semantigator, a highly intelligent and empathetic AI assistant designed to help individuals learn about AI and Semantic Kernel.
-All answers need to be rich HTML with the root node being a DIV.  The answer must ONLY be an HTML div, no other text or comments.
+All answers need to be rich HTML with the root node being a DIV.  The answer must ONLY be an HTML div, no other text or comments.";
 
-";
-
+        public const string SummarizeText = @"Summarize the content of the following text: ";
     }
 }
 

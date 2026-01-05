@@ -1,19 +1,31 @@
 ﻿using Elastic.Clients.Elasticsearch.Aggregations;
 using Microsoft.AspNetCore.Http;
+using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.ChatCompletion;
 using SemanticSwamp.DAL.Context;
 using SemanticSwamp.DAL.EFModels;
 using SemanticSwamp.Shared.DTOs;
 using SemanticSwamp.Shared.Interfaces;
+using SemanticSwamp.Shared.Prompts;
+using System.Collections;
+using System.Text;
+using System.Text.Unicode;
+using static SemanticSwamp.Shared.Enums;
 
+#pragma warning disable SKEXP0001 
 namespace SemanticSwamp.AppLogic
 {
     public class FileManager : IFileManager
     {
         private SemanticSwampDBContext _context;
+        private IChatCompletionService _chatCompletionService;
 
-        public FileManager(SemanticSwampDBContext context)
+        public FileManager(SemanticSwampDBContext context, IChatCompletionService chatCompletionService)
         {
             _context = context;
+            _chatCompletionService = chatCompletionService;
+
+            
         }
 
         public async Task<DocumentUpload> ProcessUpload(FileUploadDTO fileUploadDTO)
@@ -39,7 +51,135 @@ namespace SemanticSwamp.AppLogic
             await LinkTermsToDocumentUpload(terms, result);
             await _context.SaveChangesAsync();
 
+            var summary = await GetTextSummary(result.Base64Data);
+            result.Summary = summary;
+            await _context.SaveChangesAsync();
+
+
             return result;
+        }
+
+        public async Task<string> GetTextFileSummaryFromPath(LocalFileTypes localFileTypes)
+        {
+            var result = "";
+            var filePath = new DirectoryInfo(".").Parent.FullName + @"\SampleData\";
+
+            switch (localFileTypes)
+            {
+                case LocalFileTypes.SportsHistory:
+                    filePath += "DirtyBird-Wikipedia.html";
+                    break;
+                case LocalFileTypes.Top5Movies:
+                    filePath += "top5movies.txt";
+                    break;
+                case LocalFileTypes.TheOdyssey:
+                    filePath += "pg1727_TheOdyssey.txt";
+                    break;
+                default:
+                    filePath = "DEFAULT - NOT FOUND";
+                    break;
+            }
+
+            var fileInfo = new FileInfo(filePath);
+
+            result = await this.GetTextFileSummaryFromPath(fileInfo);
+
+
+            return result;
+        }
+
+        public async Task<string> GetTextFileSummaryFromText(string text)
+        {
+            var result = "";
+
+            var bytes = Encoding.UTF8.GetBytes(text);
+
+            var base64Data = Convert.ToBase64String(bytes);
+
+            var summary = await GetTextSummary(base64Data);
+
+            return result;
+        }
+
+
+        public async Task<string> GetTextFileSummaryFromPath(FileInfo fi)
+        {
+            var result = "";
+            try
+            {
+                    var fileBytes = File.ReadAllBytes(fi.FullName);
+                    var base64Data = Convert.ToBase64String(fileBytes);
+                    var summary = await GetTextSummary(base64Data);
+                    result = summary;
+                
+            }
+            catch (Exception ex)
+            {
+                return ex.Message + " " + ex.StackTrace;
+            }
+
+            return result;
+        }
+
+        public async Task<string> GetTextFileSummaryFromPath(string path)
+        {
+            var result = "";
+            try
+            {
+                FileInfo fi = new FileInfo(path);
+
+
+                return await GetTextFileSummaryFromPath(fi);
+            }
+            catch(Exception ex)
+            {
+                return ex.Message + " " + ex.StackTrace;
+            }
+
+            return result;
+        }
+
+        public async Task<string> GetTextSummary(string base64Data)
+        {
+            var result = "";
+
+            var fileText = await GetTextFileContent(base64Data);
+
+            try
+            {
+                var chatHistory = new ChatHistory();
+                var prompt = Prompts.SummarizeText;
+
+                chatHistory.AddUserMessage([
+                        new TextContent(prompt),
+                    ]);
+
+                chatHistory.AddUserMessage(prompt);
+
+                var pieces = Split(fileText, 10000).ToList();
+                for (int i = 0; i < pieces.Count(); i++) {
+                    chatHistory.AddDeveloperMessage(String.Format("Text Section[{0}] - {1}", i, pieces[i]));
+                }
+
+                var reply = await _chatCompletionService.GetChatMessageContentAsync(chatHistory);
+
+                result = reply.Content;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("ERROR: " + ex.Message);
+                Console.WriteLine("ERROR: " + ex.StackTrace);
+
+            }
+
+            return result;
+        }
+
+
+        static IEnumerable<string> Split(string str, int chunkSize)
+        {
+            return Enumerable.Range(0, str.Length / chunkSize)
+                .Select(i => str.Substring(i * chunkSize, chunkSize));
         }
 
         private async Task LinkTermsToDocumentUpload(List<Term> terms, DocumentUpload documentUpload)
@@ -57,7 +197,7 @@ namespace SemanticSwamp.AppLogic
         private async Task<DocumentUpload> SetCollection(DocumentUpload documentUpload, FileUploadDTO fileUploadDTO)
         {
             var result = documentUpload;
-            
+
             Collection? collection = new Collection();
 
             collection = (!String.IsNullOrEmpty(fileUploadDTO.newCollectionName))
@@ -90,6 +230,8 @@ namespace SemanticSwamp.AppLogic
 
             return result;
         }
+
+
 
         private async Task<List<Term>> GetTerms(FileUploadDTO fileUploadDTO)
         {
@@ -132,7 +274,7 @@ namespace SemanticSwamp.AppLogic
 
         }
 
-        private async Task<DocumentUpload> AddFileMetaData(DocumentUpload documentUpload, FileUploadDTO fileUploadDTO)
+        public async Task<DocumentUpload> AddFileMetaData(DocumentUpload documentUpload, FileUploadDTO fileUploadDTO)
         {
             var result = documentUpload;
 
@@ -142,7 +284,16 @@ namespace SemanticSwamp.AppLogic
             return result;
         }
 
-        private async Task<string> GetBase64DataFromFile(IFormFile file)
+        private async Task<string> GetTextFileContent(string base64Data)
+        {
+            var result = "";
+
+            var bytes = Convert.FromBase64String(base64Data);
+            result = System.Text.Encoding.UTF8.GetString(bytes);
+            return result;
+        }
+
+        public async Task<string> GetBase64DataFromFile(IFormFile file)
         {
             var bytes = await GetBytesFromIFormFileAsync(file);
 
