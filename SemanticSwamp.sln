@@ -15,8 +15,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemanticSwamp.AppLogic", "S
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SampleData", "SampleData", "{AF9EC7FB-E7FC-403E-8153-463096C3BBA6}"
 	ProjectSection(SolutionItems) = preProject
-		SampleData\pg1727_TheOdyssey.txt = SampleData\pg1727_TheOdyssey.txt
 		SampleData\DirtyBird-Wikipedia.html = SampleData\DirtyBird-Wikipedia.html
+		SampleData\pg1727_TheOdyssey.txt = SampleData\pg1727_TheOdyssey.txt
+		SampleData\SampleAIGeneratedResume.txt = SampleData\SampleAIGeneratedResume.txt
 		top5movies.txt = top5movies.txt
 	EndProjectSection
 EndProject

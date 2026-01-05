@@ -12,6 +12,7 @@ using System.Text;
 using System.Text.Unicode;
 using static SemanticSwamp.Shared.Enums;
 
+#pragma warning disable SKEXP0001 
 namespace SemanticSwamp.AppLogic
 {
     public class FileManager : IFileManager
@@ -151,10 +152,8 @@ namespace SemanticSwamp.AppLogic
                 var chatHistory = new ChatHistory();
                 var prompt = Prompts.SummarizeText;
 
-#pragma warning disable SKEXP0001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
                 chatHistory.AddUserMessage([
                         new TextContent(prompt),
-                        //new TextContent(fileText),
                     ]);
 
                 chatHistory.AddUserMessage(prompt);
@@ -164,13 +163,9 @@ namespace SemanticSwamp.AppLogic
                     chatHistory.AddDeveloperMessage(String.Format("Text Section[{0}] - {1}", i, pieces[i]));
                 }
 
-
-
-#pragma warning restore SKEXP0001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-
                 var reply = await _chatCompletionService.GetChatMessageContentAsync(chatHistory);
 
-                 result = reply.Content;
+                result = reply.Content;
             }
             catch (Exception ex)
             {
