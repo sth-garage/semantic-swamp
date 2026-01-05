@@ -133,8 +133,8 @@ public class ChatController : ControllerBase
                 }
                 else
                 {
-                    receiveResult = await inputWebSocket.ReceiveAsync(
-                            new ArraySegment<byte>(buffer), CancellationToken.None);
+                    // To be fixed later
+                    continue;
                 }
             }
 
