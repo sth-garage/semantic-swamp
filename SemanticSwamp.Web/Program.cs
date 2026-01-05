@@ -32,7 +32,7 @@ webBuilder.Services.AddDbContext<SemanticSwampDBContext>(options =>
 webBuilder.Services.AddSingleton<IChatCompletionService>(semanticKernelBuildResult.AIServices.ChatCompletionService);
 webBuilder.Services.AddSingleton<Kernel>(semanticKernelBuildResult.AIServices.Kernel);
 webBuilder.Services.AddSingleton<ConfigurationValues>(configValues);
-webBuilder.Services.AddScoped(typeof(IFileManager), typeof(FileManager));
+webBuilder.Services.AddScoped(typeof(IFileManager), typeof(UploadManager));
 
 var app = webBuilder.Build();
 

@@ -35,11 +35,8 @@ public class FileController : ControllerBase
                 && input.file != null
                 && input.file.Length != 0)
             {
-
-
                 DocumentUpload documentUpload = await _fileManager.ProcessUpload(input);
                 returnMsg = input.file.FileName + " was successfully uploaded";
-
             }
             else
             {
@@ -52,7 +49,6 @@ public class FileController : ControllerBase
         }
 
         return Ok(returnMsg);
-
     }
 
     [HttpPost("UploadLocalFileType")]
