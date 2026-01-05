@@ -89,7 +89,7 @@ public class ChatController : ControllerBase
                 var bytes = new ArraySegment<byte>(buffer, 0, receiveResult.Count);
                 var userMessage = Encoding.UTF8.GetString(bytes);
 
-                chatHistory.AddUserMessage(userMessage);
+                chatHistory.AddUserMessage(userMessage + " /nothink");
 
 
                 ChatMessageContent content = new ChatMessageContent();
@@ -97,6 +97,12 @@ public class ChatController : ControllerBase
                 var result = await chatCompletionService.GetChatMessageContentAsync(chatHistory,
                     executionSettings: openAIPromptExecutionSettings,
                     kernel: kernel);
+
+                var divTagIndex = result.Content.IndexOf("<div>");
+                if (divTagIndex > -1)
+                {
+                    result.Content = result.Content.Substring(divTagIndex);
+                }
 
                 result.Content = result.Content.Replace("```html", "")
                     .Replace("```", "")
@@ -106,20 +112,30 @@ public class ChatController : ControllerBase
                     .Replace("<|message|>", "")
                     .Replace("commentary", "");
 
-                chatHistory.AddAssistantMessage(result.Content);
+                //result.Content = result.Content.Substring(result.Content.IndexOf("<div>"));
 
-                var resultString = result.AsJson();
-                var resultMsgBytes = Encoding.UTF8.GetBytes(resultString);
+                if (divTagIndex > -1)
+                {
+                    chatHistory.AddAssistantMessage(result.Content);
+
+                    var resultString = result.AsJson();
+                    var resultMsgBytes = Encoding.UTF8.GetBytes(resultString);
 
 
-                await inputWebSocket.SendAsync(
-                    resultMsgBytes,
-                    receiveResult.MessageType,
-                    receiveResult.EndOfMessage,
-                    CancellationToken.None);
+                    await inputWebSocket.SendAsync(
+                        resultMsgBytes,
+                        receiveResult.MessageType,
+                        receiveResult.EndOfMessage,
+                        CancellationToken.None);
 
-                receiveResult = await inputWebSocket.ReceiveAsync(
-                        new ArraySegment<byte>(buffer), CancellationToken.None);
+                    receiveResult = await inputWebSocket.ReceiveAsync(
+                            new ArraySegment<byte>(buffer), CancellationToken.None);
+                }
+                else
+                {
+                    receiveResult = await inputWebSocket.ReceiveAsync(
+                            new ArraySegment<byte>(buffer), CancellationToken.None);
+                }
             }
 
             await inputWebSocket.CloseAsync(

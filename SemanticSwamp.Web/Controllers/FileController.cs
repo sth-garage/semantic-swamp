@@ -92,13 +92,13 @@ public class FileController : ControllerBase
 
         switch (localFileName.ToLowerInvariant())
         {
-            case "pg1727_TheOdyssey.txt":
+            case "theodyssey":
                 fileType = Enums.LocalFileTypes.TheOdyssey;
                 break;
-            case "dirtybird-wikipedia.html":
+            case "sportshistory":
                 fileType = Enums.LocalFileTypes.SportsHistory;
                 break;
-            case "top5movies.txt":
+            case "top5movies":
             default:
                 fileType = Enums.LocalFileTypes.Top5Movies;
                 break;
