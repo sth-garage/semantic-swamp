@@ -12,9 +12,7 @@ namespace SemanticSwamp.Shared.Interfaces
     {
         Task<DocumentUpload> ProcessUpload(FileUploadDTO fileUploadDTO);
         Task<string> GetTextSummary(string base64Data);
-        Task<string> GetBase64DataFromFile(IFormFile file);
         Task<string> GetTextFileSummaryFromPath(LocalFileTypes localFileTypes);
 
-        Task<string> GetTextFileSummaryFromText(string text);
     }
 }

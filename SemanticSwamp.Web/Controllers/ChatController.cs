@@ -42,9 +42,6 @@ public class ChatController : ControllerBase
     [Route("/ws")]
     public async Task Get()
     {
-        var stop = 1;
-
-
         if (HttpContext.WebSockets.IsWebSocketRequest)
         {
             using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
@@ -111,8 +108,6 @@ public class ChatController : ControllerBase
                     .Replace("div<|message|>", "")
                     .Replace("<|message|>", "")
                     .Replace("commentary", "");
-
-                //result.Content = result.Content.Substring(result.Content.IndexOf("<div>"));
 
                 if (divTagIndex > -1)
                 {
