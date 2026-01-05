@@ -1,0 +1,107 @@
+**Alex Carter – Entry‑Level Front‑End Developer**
+
+---
+
+### Contact
+- **Address:** 127 Maple Ridge Lane, Apt 3B, Portland, OR 97205  
+- **Phone:** (503) 555‑0198  
+- **Email:** alex.carter.dev@example.com  
+- **GitHub:** github.com/alexcarter-dev  
+- **Portfolio:** www.alexcarter.dev  
+- **LinkedIn:** linkedin.com/in/alexcarter-dev  
+
+---
+
+### PROFESSIONAL SUMMARY
+Enthusiastic front‑end developer with 14 months of professional experience in React and React Native, recently promoted from Junior Developer. Actively growing Angular (2+) skills through hands‑on personal projects and eager to contribute to production Angular applications.
+
+---
+
+### TECHNICAL SKILLS  
+
+| Category | Details |
+|----------|---------|
+| **Languages & Core** | JavaScript (ES6+), TypeScript, HTML5, CSS3 |
+| **Frameworks / Libraries** | React (18), React Native, Redux Toolkit, React Query, React Router, Tailwind CSS, Styled Components, SASS/SCSS, Storybook, Jest, React Testing Library, RxJS, NgRx, AngularJS (1.x) → Angular 2+ (14‑17), Angular Material |
+| **Tooling & Testing** | Git/GitHub, Vite, Webpack, ESLint, Prettier, Node.js, REST APIs, JSON Server, Express (basic) |
+| **State Management** | Redux Toolkit, React Query, NgRx |
+| **Styling** | CSS Modules, Tailwind CSS, SASS/SCSS, BEM, design tokens |
+| **Accessibility & Responsiveness** | ARIA, semantic HTML, keyboard navigation, color‑contrast, mobile‑first layouts |
+| **Soft Skills** | Detail‑oriented, collaborative, proactive learner, strong communication |
+
+---
+
+### PROFESSIONAL EXPERIENCE  
+
+#### Northwind Digital Labs – Front‑End Developer (Promoted from Junior)  
+*Portland, OR (Hybrid)*  | *Jun 2023 – Present* (14 months)
+
+- Built reusable UI components in **React** and **React Native** using Styled Components, Tailwind CSS, CSS Modules, and SASS/SCSS.  
+- Contributed 20+ npm packages to an internal design system; authored comprehensive documentation for usage, prop tables, accessibility notes, and Node.js tooling scripts.  
+- Implemented cross‑platform UI patterns (React + React Native) with shared business logic, improving consistency across web and mobile.  
+- Enhanced **accessibility** scores from ~72 → 93 (Lighthouse) by adding semantic HTML, ARIA attributes, keyboard navigation, and color‑contrast adjustments.  
+- Managed API state with **Redux Toolkit** & **React Query**, including optimistic UI updates and error handling patterns.  
+- Wrote unit & integration tests (Jest, React Testing Library) achieving 85–95 % coverage for owned components.  
+- Mentored junior interns on CSS Grid, Flexbox, Styled Components, and best practices.
+
+#### Personal Projects – Angular 16‑17 (Self‑Directed Learning)
+
+| Project | Description |
+|---------|-------------|
+| **TaskFlow Pro** | Kanban productivity app built with Angular 17, NgRx, RxJS, Angular Material. Implemented routing, lazy loading, guards, and a global state store for boards/lists/cards. |
+| **FitTrack Mobile** | React Native workout tracker (Expo). Features navigation (React Navigation), local persistence (AsyncStorage), styling with Styled Components; built reusable UI components and detailed documentation. |
+| **Student Budget Planner** | AngularJS 1.x single‑page app (Angular 2+ transition) for visualizing monthly expenses; integrated mock REST API via JSON Server. |
+| **Interactive Course Planner** | Responsive web UI using vanilla JavaScript & CSS Grid to allow students to schedule courses and view credit loads. |
+| **Photo Gallery** | Responsive gallery with Angular Material, lazy‑loaded modules, custom theming (Figma spec), form validation with Reactive Forms, and accessibility best practices. |
+| **Activities & Campus Event Explorer** | AngularJS 1.x SPA for filtering campus events; later migrated to Angular 2+ (Angular 14‑17) as a personal learning project. |
+
+---
+
+### SELECTED PROJECTS (GitHub)
+
+- **TaskFlow Pro (Angular)** – `github.com/alexcarter-dev/taskflow-pro-angular`  
+- **FitTrack Mobile** – `github.com/alexcarter-dev/fittrack-mobile`
+
+*(All repositories include README, architecture notes, and code samples.)*
+
+---
+
+### EDUCATION  
+
+**B.S. in Computer & Information Science** – University of Oregon, Eugene, OR (2018–2022)  
+GPA: 3.5 / 4.0  
+
+- **Focus Areas:** Web Development, Human‑Computer Interaction  
+
+**Relevant Coursework**
+
+- Web Application Development (JavaScript, AngularJS, REST APIs)  
+- User Interface & UX Design  
+- Mobile Application Development (introductory React Native concepts)  
+- Software Engineering I & II (Agile, Git workflows, documentation)  
+- Data Structures & Algorithms (Java)
+
+---
+
+### NOTABLE ACADEMIC PROJECTS  
+
+| Project | Tech Stack | Highlights |
+|---------|------------|------------|
+| Interactive Course Planner | Vanilla JS, CSS Grid | Responsive UI for course scheduling; visualized credit loads. |
+| HCI Usability Study | – | Conducted usability test, created personas, task scenarios, and accessibility recommendations. |
+
+---
+
+### ADDITIONAL EXPERIENCE & INTERESTS  
+
+- **Team Collaboration:** Participated in agile ceremonies (daily stand‑ups, sprint planning, retrospectives), wrote detailed Angular migration tickets, and actively sought code reviews.  
+- **Learning & Reading:** Followed Udemy courses on Angular 14–17, Angular Blog, NG Conf talks, YouTube channels, and blogs such as CSS‑Tricks and Smashing Magazine to stay current.  
+- **Community Involvement:** Attended Portland meetups for JavaScript/Angular, contributed to open‑source discussions, and shared UI component libraries on GitHub.  
+
+---
+
+### AVAILABILITY & WORK AUTHORIZATION  
+
+Open to hybrid or remote positions; authorized to work in the U.S.
+
+---

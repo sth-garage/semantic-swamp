@@ -37,9 +37,37 @@ public class DocumentUploadsController : ControllerBase
                 CreatedOn = documentUpload.CreatedOn.ToString("yyyyMMdd_HHmmss"),
                 HasBeenProcessed = documentUpload.HasBeenProcessed,
                 IsActive = documentUpload.IsActive,
+                Summary = documentUpload.Summary,
+                Id = documentUpload.Id,
             });
         }
 
         return result.ToList();
+    }
+
+    [HttpGet("DownloadOriginalDocument")]
+    public async Task<IActionResult> DownloadOriginalDocument([FromQuery] int documentUploadId)
+    {
+        // Basic security: Only allow downloading files from a specific folder
+        var documentUpload = _context.DocumentUploads.FirstOrDefault(x => x.Id == documentUploadId);
+
+        if (documentUpload != null)
+        {
+            var base64StringData = documentUpload.Base64Data;
+            var memory = new MemoryStream();
+            using (var memStream = new MemoryStream(Convert.FromBase64String(base64StringData)))
+            {
+                await memStream.CopyToAsync(memory);
+
+            }
+
+            memory.Position = 0;
+            var contentType = "application/octet-stream";
+            return File(memory, contentType, documentUpload.FileName);
+        }
+        else
+        {
+            return Ok("");
+        }
     }
 }
