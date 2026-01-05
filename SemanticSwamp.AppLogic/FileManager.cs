@@ -151,10 +151,22 @@ namespace SemanticSwamp.AppLogic
                 var chatHistory = new ChatHistory();
                 var prompt = Prompts.SummarizeText;
 
+#pragma warning disable SKEXP0001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
                 chatHistory.AddUserMessage([
                         new TextContent(prompt),
-                        new TextContent(fileText),
+                        //new TextContent(fileText),
                     ]);
+
+                chatHistory.AddUserMessage(prompt);
+
+                var pieces = Split(fileText, 10000).ToList();
+                for (int i = 0; i < pieces.Count(); i++) {
+                    chatHistory.AddDeveloperMessage(String.Format("Text Section[{0}] - {1}", i, pieces[i]));
+                }
+
+
+
+#pragma warning restore SKEXP0001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
 
                 var reply = await _chatCompletionService.GetChatMessageContentAsync(chatHistory);
 
@@ -168,6 +180,13 @@ namespace SemanticSwamp.AppLogic
             }
 
             return result;
+        }
+
+
+        static IEnumerable<string> Split(string str, int chunkSize)
+        {
+            return Enumerable.Range(0, str.Length / chunkSize)
+                .Select(i => str.Substring(i * chunkSize, chunkSize));
         }
 
         private async Task LinkTermsToDocumentUpload(List<Term> terms, DocumentUpload documentUpload)
