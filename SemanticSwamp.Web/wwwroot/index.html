@@ -2248,7 +2248,12 @@
           );
         }
 
-        $msgEl.append($avatar, $bubble);
+        if (role === "Client") {
+            $msgEl.append($bubble, $avatar);
+        }
+        else {
+            $msgEl.append($avatar, $bubble);
+        }
         $chatArea.append($msgEl);
 
         if (role !== "Client") {
