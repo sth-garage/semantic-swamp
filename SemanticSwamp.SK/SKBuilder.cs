@@ -26,11 +26,17 @@ namespace SemanticSwamp.SK
             var apiKey = configValues.LMStudioSettings.LMStudio_ApiKey;
             var apiUrl = configValues.LMStudioSettings.LMStudio_ApiUrl;
 
+            HttpClient client = new HttpClient()
+            {
+                Timeout = new TimeSpan(0, 5, 0)
+            };
+
             // Create a kernel with Azure OpenAI chat completion
             var skBuilder = Kernel.CreateBuilder().AddOpenAIChatCompletion(
                 modelId: modelId,
                 apiKey: modelId,
-                endpoint: new Uri(apiUrl)
+                endpoint: new Uri(apiUrl),
+                httpClient: client
             ).AddLocalTextEmbeddingGeneration();
 
             skBuilder.Services.AddDbContext<SemanticSwampDBContext>(options =>

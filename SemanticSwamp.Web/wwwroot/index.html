@@ -1764,7 +1764,7 @@
                             <div class="mb-2 d-flex align-items-center flex-wrap gap-2">
                                 <button type="button" id="chooseFileBtn" class="btn btn-outline-primary">Choose File</button>
                                 <span id="selectedFileName" class="file-name">No file selected</span>
-                                <input type="file" id="uploadFileInput" style="display:none;" accept=".txt" />
+                                <input type="file" id="uploadFileInput" style="display:none;" accept=".txt,.pdf" />
                             </div>
 
                             <div class="small text-muted">Only <strong>.txt</strong> files are accepted.</div>
@@ -2723,7 +2723,10 @@
         // Standard file upload
         const file = $fileInput[0].files[0];
         if (!file) { alert("Please choose a file first."); return; }
-        if (!/\.txt$/i.test(file.name)) {
+        var isText = /\.txt$/i.test(file.name);
+        var isPDF = /\.pdf$/i.test(file.name);
+        debugger;
+        if (!isText && !isPDF) {
           alert("Only .txt files are allowed.");
           return;
         }

@@ -46,4 +46,11 @@ namespace SemanticSwamp.Shared.Models
         public List<AgentFromWeb> Agents { get; set; } = new List<AgentFromWeb>();
     }
 
+    public class PDFText
+    {
+        public string Text { get; set; }
+
+        public int PageNumber { get; set; }
+    }
+
 }

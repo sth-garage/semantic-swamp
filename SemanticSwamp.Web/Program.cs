@@ -39,6 +39,8 @@ webBuilder.Services.AddSingleton<ITextEmbeddingGenerationService>(semanticKernel
 webBuilder.Services.AddScoped(typeof(ITextManager), typeof(TextManager));
 webBuilder.Services.AddScoped(typeof(IRAGManager), typeof(RAGManager));
 webBuilder.Services.AddScoped(typeof(IFileManager), typeof(UploadManager));
+webBuilder.Services.AddScoped(typeof(IPDFManager), typeof(PDFManager));
+
 
 
 var app = webBuilder.Build();
