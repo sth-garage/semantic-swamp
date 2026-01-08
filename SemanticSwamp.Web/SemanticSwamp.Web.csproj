@@ -5,6 +5,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>040f997a-cddb-4d59-bfbf-9de12f31b1b1</UserSecretsId>
+    <SignAssembly>True</SignAssembly>
+    <DelaySign>True</DelaySign>
   </PropertyGroup>
 
   <ItemGroup>

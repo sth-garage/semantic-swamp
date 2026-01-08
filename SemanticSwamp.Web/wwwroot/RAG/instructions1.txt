@@ -4,11 +4,11 @@ Redesign the site to be friendlier using any style you choose - complete radical
 
 Maintain all existing functionality - but refactoring to fit a different layout is fine.
 
-Go wild with the restyling - make any DOM changes needed but maint functionality.
+Go wild with the restyling - make any DOM changes needed but maintain functionality.
 
 The site should be fun, inviting, have cool effects / animations - changing the color scheme or creating a new one is good
 
-Do a complete redesign.
+Do a complete redesign, but keep the title as 'Semantic Swamp' and keep the avatar 'Semantigator'
 
 Return the result as a single valid HTML/CS/JS file
 

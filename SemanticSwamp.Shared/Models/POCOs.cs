@@ -1,5 +1,6 @@
 ﻿using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Embeddings;
 
 namespace SemanticSwamp.Shared.Models
 {
@@ -14,6 +15,8 @@ namespace SemanticSwamp.Shared.Models
     public class AIServices
     {
         public IChatCompletionService ChatCompletionService { get; set; }
+        
+        public ITextEmbeddingGenerationService TextEmbeddingGenerationService { get; set; }
 
         public Kernel Kernel { get; set; }
     }

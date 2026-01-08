@@ -19,17 +19,20 @@ namespace SemanticSwamp.AppLogic
     {
         private SemanticSwampDBContext _context;
         private IChatCompletionService _chatCompletionService;
+        private ITextManager _textManager;
+        private IRAGManager _ragManager;
 
-        public UploadManager(SemanticSwampDBContext context, IChatCompletionService chatCompletionService)
+        public UploadManager(SemanticSwampDBContext context, IChatCompletionService chatCompletionService, ITextManager textManager, IRAGManager ragManager)
         {
             _context = context;
             _chatCompletionService = chatCompletionService;
-
-            
+            _textManager = textManager;
+            _ragManager = ragManager;
         }
 
         public async Task<DocumentUpload> ProcessUpload(FileUploadDTO fileUploadDTO)
         {
+            await _ragManager.Search("Who are some players on the Falcons?");
             var terms = await GetTerms(fileUploadDTO);
             await _context.SaveChangesAsync();
 
@@ -42,6 +45,7 @@ namespace SemanticSwamp.AppLogic
 
 
             result = await AddFileMetaData(result, fileUploadDTO);
+
             result = await SetCollection(result, fileUploadDTO);
             result = await SetCategory(result, fileUploadDTO);
 
@@ -51,10 +55,16 @@ namespace SemanticSwamp.AppLogic
             await LinkTermsToDocumentUpload(terms, result);
             await _context.SaveChangesAsync();
 
+
             var summary = await GetTextSummary(result.Base64Data);
             result.Summary = summary;
-            await _context.SaveChangesAsync();
 
+            await _ragManager.Upload(result);
+
+
+            await _context.SaveChangesAsync();
+            
+            
 
             return result;
         }
@@ -64,7 +74,7 @@ namespace SemanticSwamp.AppLogic
         {
             var result = documentUpload;
 
-            result.Base64Data = await GetBase64DataFromFile(fileUploadDTO.file);
+            result.Base64Data = await _textManager.GetBase64DataFromFile(fileUploadDTO.file);
             result.FileName = fileUploadDTO.file.FileName;
 
             return result;
@@ -82,25 +92,7 @@ namespace SemanticSwamp.AppLogic
             }
         }
 
-        private async Task<string> GetBase64DataFromFile(IFormFile file)
-        {
-            var result = "";
-
-            if (file == null || file.Length == 0)
-            {
-                result = "";
-            }
-
-            using (var stream = new MemoryStream())
-            {
-                await file.CopyToAsync(stream);
-                var bytes = stream.ToArray();
-                result = Convert.ToBase64String(bytes);
-            }
-
-            return result;
-
-        }
+        
 
         #endregion
 
@@ -146,7 +138,6 @@ namespace SemanticSwamp.AppLogic
 
         private async Task<List<Term>> GetTerms(FileUploadDTO fileUploadDTO)
         {
-            //var result = documentUpload;
             List<Term> termsList = new List<Term>();
 
 
@@ -244,7 +235,7 @@ namespace SemanticSwamp.AppLogic
         {
             var result = "";
 
-            var fileText = await GetTextFileContent(base64Data);
+            var fileText = _textManager.GetTextFileContent(base64Data);
 
             try
             {
@@ -257,9 +248,14 @@ namespace SemanticSwamp.AppLogic
 
                 chatHistory.AddUserMessage(prompt);
 
-                var pieces = Split(fileText, 10000).ToList();
+                var pieces = _textManager.GetChunks(fileText);
+
                 for (int i = 0; i < pieces.Count(); i++) {
-                    chatHistory.AddDeveloperMessage(String.Format("Text Section[{0}] - {1}", i, pieces[i]));
+                    chatHistory.AddUserMessage(String.Format(" Text Section[{0}] - {1} - End Text Section[{0}] ", i, pieces[i]));
+                }
+                if (pieces.Count == 0)
+                {
+                    chatHistory.AddUserMessage("Text to summarize: " + fileText + " --- end of text to summarize");
                 }
 
                 var reply = await _chatCompletionService.GetChatMessageContentAsync(chatHistory);
@@ -274,25 +270,6 @@ namespace SemanticSwamp.AppLogic
             }
 
             return result;
-        }
-
-        #endregion
-
-        #region Utility
-
-        private async Task<string> GetTextFileContent(string base64Data)
-        {
-            var result = "";
-
-            var bytes = Convert.FromBase64String(base64Data);
-            result = System.Text.Encoding.UTF8.GetString(bytes);
-            return result;
-        }
-
-        private IEnumerable<string> Split(string str, int chunkSize)
-        {
-            return Enumerable.Range(0, str.Length / chunkSize)
-                .Select(i => str.Substring(i * chunkSize, chunkSize));
         }
 
         #endregion
