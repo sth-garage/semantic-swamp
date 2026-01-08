@@ -11,5 +11,6 @@ namespace SemanticSwamp.Shared.Interfaces
         Task<string> GetBase64DataFromFile(IFormFile file);
 
         List<string> GetChunks(string text, int chunkSize = 10000);
+        string GetBase64DataFromString(string value);
     }
 }

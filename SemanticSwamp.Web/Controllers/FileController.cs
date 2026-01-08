@@ -27,7 +27,7 @@ public class FileController : ControllerBase
     {
         var returnMsg = "";
 
-        DocumentUpload existing = null;// _context.DocumentUploads.FirstOrDefault(x => x.IsActive && x.FileName == input.file.FileName);
+        DocumentUpload existing = _context.DocumentUploads.FirstOrDefault(x => x.IsActive && x.FileName == input.file.FileName);
 
         if (existing == null)
         {

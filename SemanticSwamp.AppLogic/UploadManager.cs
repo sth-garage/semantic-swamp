@@ -21,18 +21,20 @@ namespace SemanticSwamp.AppLogic
         private IChatCompletionService _chatCompletionService;
         private ITextManager _textManager;
         private IRAGManager _ragManager;
+        private IPDFManager _pdfManager;
 
-        public UploadManager(SemanticSwampDBContext context, IChatCompletionService chatCompletionService, ITextManager textManager, IRAGManager ragManager)
+        public UploadManager(SemanticSwampDBContext context, IChatCompletionService chatCompletionService, ITextManager textManager, IRAGManager ragManager, IPDFManager pdfManager)
         {
             _context = context;
             _chatCompletionService = chatCompletionService;
             _textManager = textManager;
             _ragManager = ragManager;
+            _pdfManager = pdfManager;
         }
 
         public async Task<DocumentUpload> ProcessUpload(FileUploadDTO fileUploadDTO)
         {
-            await _ragManager.Search("Who are some players on the Falcons?");
+            //await _ragManager.Search("Who are some players on the Falcons?");
             var terms = await GetTerms(fileUploadDTO);
             await _context.SaveChangesAsync();
 
@@ -46,6 +48,9 @@ namespace SemanticSwamp.AppLogic
 
             result = await AddFileMetaData(result, fileUploadDTO);
 
+            //var text = _pdfManager.GetPDFText(result);
+            //var content = await _pdfManager.GetContent(text);
+
             result = await SetCollection(result, fileUploadDTO);
             result = await SetCategory(result, fileUploadDTO);
 
@@ -55,12 +60,25 @@ namespace SemanticSwamp.AppLogic
             await LinkTermsToDocumentUpload(terms, result);
             await _context.SaveChangesAsync();
 
+            var isPDF = result.FileName.ToLowerInvariant().EndsWith("pdf");
 
-            var summary = await GetTextSummary(result.Base64Data);
+            //var summary = await GetTextSummary(result.Base64Data, isPDF);
+            //result.Summary = summary;
+
+            string base64ForSummary = result.Base64Data;
+            string overrideText = null;
+
+            if (isPDF)
+            {
+                var pdfContent = await _pdfManager.GetContent(result.Base64Data);
+                base64ForSummary = _textManager.GetBase64DataFromString(pdfContent);
+                overrideText = pdfContent;
+            }
+
+            var summary = await GetTextSummary(base64ForSummary, isPDF);
             result.Summary = summary;
 
-            await _ragManager.Upload(result);
-
+            await _ragManager.UploadToRAG(result, overrideText);
 
             await _context.SaveChangesAsync();
             
@@ -231,11 +249,19 @@ namespace SemanticSwamp.AppLogic
 
 
 
-        public async Task<string> GetTextSummary(string base64Data)
+        public async Task<string> GetTextSummary(string base64Data, bool isPDF = false)
         {
             var result = "";
+            var fileText = "";
 
-            var fileText = _textManager.GetTextFileContent(base64Data);
+            //if (!isPDF)
+            //{
+                fileText = _textManager.GetTextFileContent(base64Data);
+            //}
+            //else
+            //{
+            //    fileText = await _pdfManager.GetContent(base64Data);
+            //}
 
             try
             {

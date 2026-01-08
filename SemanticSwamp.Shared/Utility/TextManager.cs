@@ -26,6 +26,15 @@ namespace SemanticSwamp.Shared.Utility
                 .Select(i => str.Substring(i * chunkSize, chunkSize));
         }
 
+        public string GetBase64DataFromString(string value)
+        {
+            var result = "";
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(value);
+            result = Convert.ToBase64String(bytes);
+
+            return result;
+        }
 
 
         public async Task<string> GetBase64DataFromFile(IFormFile file)

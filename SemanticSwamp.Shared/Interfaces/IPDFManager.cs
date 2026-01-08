@@ -17,5 +17,6 @@ namespace SemanticSwamp.Shared.Interfaces
 
         List<PDFText> GetPDFText(byte[] bytes);
 
+        Task<string> GetContent(string base64Data);
     }
 }

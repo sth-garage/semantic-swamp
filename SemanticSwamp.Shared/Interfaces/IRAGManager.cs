@@ -8,7 +8,7 @@ namespace SemanticSwamp.Shared.Interfaces
 {
     public interface IRAGManager
     {
-        Task Upload(DocumentUpload documentUpload);
+        Task UploadToRAG(DocumentUpload documentUpload, string overrideText = null);
 
         Task<List<DocumentUploadRAGEntry>> Search(string promptOrQuestion);
     }

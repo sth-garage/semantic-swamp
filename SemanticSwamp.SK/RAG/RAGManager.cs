@@ -46,19 +46,27 @@ namespace SemanticSwamp.SK.RAG
             return paragraphs;
         }
 
-        public async Task Upload(DocumentUpload documentUpload)
+
+
+        public async Task UploadToRAG(DocumentUpload documentUpload, string overrideText = null)
         {
             var vectorStore = new QdrantVectorStore(new QdrantClient("localhost"), ownsClient: true);
-            //var textEmbed = _kernel.GetRequiredService<ITextEmbeddingGenerationService>();
-
-            var collection = new QdrantCollection<ulong, DocumentUploadRAGEntry>(
+            
+            var collection = new QdrantCollection<Guid, DocumentUploadRAGEntry>(
                 new QdrantClient("localhost"),
                 _ragCollectionName,
                 ownsClient: true);
 
+
             await collection.EnsureCollectionExistsAsync();
 
             var content = _textManager.GetTextFileContent(documentUpload.Base64Data);
+
+            if (!String.IsNullOrEmpty(overrideText))
+            {
+                content = overrideText;
+            }
+
             var pieces = GetChunks(content);
 
             ulong idValue = 1;
@@ -77,7 +85,7 @@ namespace SemanticSwamp.SK.RAG
                     Text = current,
                     TextEmbedding = await _textEmbeddingGenerationService.GenerateEmbeddingAsync(current),
                     Index = i,
-                    Id = idValue++,
+                    Id = Guid.NewGuid(),
                     CreatedOn = DateTime.Now.ToString("yyyyMMdd_HHmmss"),
                     FileName = documentUpload.FileName,
                 };
@@ -90,7 +98,7 @@ namespace SemanticSwamp.SK.RAG
         {
             var vectorStore = new QdrantVectorStore(new QdrantClient("localhost"), ownsClient: true);
 
-            var collection = new QdrantCollection<ulong, DocumentUploadRAGEntry>(
+            var collection = new QdrantCollection<Guid, DocumentUploadRAGEntry>(
                 new QdrantClient("localhost"),
                 _ragCollectionName,
                 ownsClient: true);

@@ -25,6 +25,13 @@ namespace SemanticSwamp.AppLogic
             _chatCompletionService = chatCompletionService;
         }
 
+        public async Task<string> GetContent(string base64Data)
+        {
+            var text = GetPDFText(base64Data);
+            var result = await GetContent(text);
+            return result;
+        }
+
         public async Task<string> GetContent(List<PDFText> pdfTexts)
         {
             var result = "";
@@ -68,6 +75,8 @@ namespace SemanticSwamp.AppLogic
 
             }
             var response = await _chatCompletionService.GetChatMessageContentAsync(chatHistory);
+
+            result = response.Content;
 
             return result;
         }
