@@ -29,7 +29,7 @@ var semanticKernelBuildResult = await skBuilder.BuildSemanticKernel(configValues
 webBuilder.Services.AddDbContext<SemanticSwampDBContext>(options =>
 {
     options.UseSqlServer(configValues.ConnectionStrings.ConnectionString_SemanticSwamp,
-        sqlServerOptions => sqlServerOptions.CommandTimeout(600));
+        sqlServerOptions => sqlServerOptions.CommandTimeout(6000));
 });
 
 webBuilder.Services.AddSingleton<IChatCompletionService>(semanticKernelBuildResult.AIServices.ChatCompletionService);

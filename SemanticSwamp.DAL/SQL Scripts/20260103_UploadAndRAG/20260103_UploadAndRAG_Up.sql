@@ -1,6 +1,26 @@
 USE [SemanticSwamp]
 GO
 
+/****** Object:  Table [dbo].[IdTracker]    Script Date: 1/12/2026 3:14:36 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[IdTracker](
+	[LastIdUsed] [int] NOT NULL,
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+ CONSTRAINT [PK_IdTracker] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+ALTER TABLE [dbo].[IdTracker] ADD  CONSTRAINT [DF_IdTracker_LastIdUsed]  DEFAULT ((0)) FOR [LastIdUsed]
+GO
+
 /****** Object:  Table [dbo].[Terms]    Script Date: 1/4/2026 2:21:27 AM ******/
 SET ANSI_NULLS ON
 GO

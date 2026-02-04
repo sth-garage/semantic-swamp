@@ -17,11 +17,11 @@ public partial class DocumentUpload
 
     public bool HasBeenProcessed { get; set; }
 
+    public string? Summary { get; set; }
+
     public int CollectionId { get; set; }
 
     public int CategoryId { get; set; }
-
-    public string? Summary { get; set; }
 
     public virtual Category Category { get; set; } = null!;
 

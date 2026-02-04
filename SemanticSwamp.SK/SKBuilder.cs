@@ -28,7 +28,7 @@ namespace SemanticSwamp.SK
 
             HttpClient client = new HttpClient()
             {
-                Timeout = new TimeSpan(0, 5, 0)
+                Timeout = new TimeSpan(2, 0, 0)
             };
 
             // Create a kernel with Azure OpenAI chat completion

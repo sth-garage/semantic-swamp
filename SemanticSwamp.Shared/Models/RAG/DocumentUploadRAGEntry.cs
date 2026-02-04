@@ -8,7 +8,7 @@ namespace SemanticSwamp.Shared.Models.RAG
     public class DocumentUploadRAGEntry
     {
         [VectorStoreKey]
-        public Guid Id { get; set; }
+        public ulong Id { get; set; }
 
 
         [VectorStoreData(IsIndexed = true)]

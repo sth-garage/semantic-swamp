@@ -20,6 +20,8 @@ public partial class SemanticSwampDBContext : DbContext
 
     public virtual DbSet<DocumentUploadTerm> DocumentUploadTerms { get; set; }
 
+    public virtual DbSet<IdTracker> IdTrackers { get; set; }
+
     public virtual DbSet<Term> Terms { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -55,12 +57,12 @@ public partial class SemanticSwampDBContext : DbContext
             entity.HasOne(d => d.Category).WithMany(p => p.DocumentUploads)
                 .HasForeignKey(d => d.CategoryId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Categories_DocumentUploads");
+                .HasConstraintName("FK_DocumentUploads_Categories");
 
             entity.HasOne(d => d.Collection).WithMany(p => p.DocumentUploads)
                 .HasForeignKey(d => d.CollectionId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Collections_DocumentUploads");
+                .HasConstraintName("FK_DocumentUploads_Collections");
         });
 
         modelBuilder.Entity<DocumentUploadTerm>(entity =>
@@ -74,6 +76,11 @@ public partial class SemanticSwampDBContext : DbContext
                 .HasForeignKey(d => d.TermId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_DocumentUploadTerms_Terms");
+        });
+
+        modelBuilder.Entity<IdTracker>(entity =>
+        {
+            entity.ToTable("IdTracker");
         });
 
         modelBuilder.Entity<Term>(entity =>

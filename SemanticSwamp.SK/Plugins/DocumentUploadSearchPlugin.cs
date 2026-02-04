@@ -31,14 +31,20 @@ namespace SemanticSwamp.SK.Plugins
             _ragManager = ragManager;
         }
 
-        [KernelFunction("search_for_facts_history_falcons")]
-        [Description("Returns a list of records relating to the NFL Sports Team the Atlanta Falcons")]
-        public async Task<List<DocumentUploadRAGEntry>> SearchForAnAnswerAboutTheFalcons(string question)
+        [KernelFunction("search_info_about_movie_odyssey")]
+        [Description("Returns info about the 2026 movie The Odyssey by Christopher Nolan")]
+        public async Task<List<DocumentUploadRAGEntry>> SearchForOdysseyInfo(string question)
         {
-            var temp = await _ragManager.Search(question);
-            return temp;
+            var result = await _ragManager.Search(question);
+            return result;
         }
 
-
+        [KernelFunction("search_info_about_notepadpp_config")]
+        [Description("Returns a list of info about configuring Notepad++")]
+        public async Task<List<DocumentUploadRAGEntry>> SearchForNotepadPP(string question)
+        {
+            var result = await _ragManager.Search(question);
+            return result;
+        }
     }
 }

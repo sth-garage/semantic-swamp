@@ -1,14 +1,18 @@
 ﻿using DocumentFormat.OpenXml.Presentation;
 using DocumentFormat.OpenXml.Wordprocessing;
+using Elastic.Clients.Elasticsearch;
 using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.Qdrant;
 using Microsoft.SemanticKernel.Embeddings;
 using Microsoft.SemanticKernel.Text;
 using Qdrant.Client;
+using SemanticSwamp.DAL.Context;
 using SemanticSwamp.DAL.EFModels;
 using SemanticSwamp.Shared.Interfaces;
 using SemanticSwamp.Shared.Models.RAG;
+using SemanticSwamp.Shared.Prompts;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -25,13 +29,19 @@ namespace SemanticSwamp.SK.RAG
         //private Kernel _kernel;
         private ITextEmbeddingGenerationService _textEmbeddingGenerationService;
         private string _ragCollectionName = "DocumentUpload";
+        private SemanticSwampDBContext _context;
+        private IChatCompletionService _chatCompletionService;
 
 
-        public RAGManager(ITextManager textManager, ITextEmbeddingGenerationService textEmbeddingGenerationService) 
+        public RAGManager(ITextManager textManager, 
+            ITextEmbeddingGenerationService textEmbeddingGenerationService, 
+            SemanticSwampDBContext context, 
+            IChatCompletionService chatCompletionService) 
         { 
             _textManager = textManager;
-            //_kernel = kernel;
+            _chatCompletionService = chatCompletionService;
             _textEmbeddingGenerationService = textEmbeddingGenerationService;
+            _context = context;
         }
 
         public List<string> GetChunks(string value)
@@ -52,7 +62,7 @@ namespace SemanticSwamp.SK.RAG
         {
             var vectorStore = new QdrantVectorStore(new QdrantClient("localhost"), ownsClient: true);
             
-            var collection = new QdrantCollection<Guid, DocumentUploadRAGEntry>(
+            var collection = new QdrantCollection<ulong, DocumentUploadRAGEntry>(
                 new QdrantClient("localhost"),
                 _ragCollectionName,
                 ownsClient: true);
@@ -69,7 +79,9 @@ namespace SemanticSwamp.SK.RAG
 
             var pieces = GetChunks(content);
 
-            ulong idValue = 1;
+            var idTracker = _context.IdTrackers.First();
+
+            ulong idValue = (ulong) idTracker.LastIdUsed;
             
 
             for (var i = 0; i < pieces.Count; i++)
@@ -85,20 +97,23 @@ namespace SemanticSwamp.SK.RAG
                     Text = current,
                     TextEmbedding = await _textEmbeddingGenerationService.GenerateEmbeddingAsync(current),
                     Index = i,
-                    Id = Guid.NewGuid(),
+                    Id = idValue++,
                     CreatedOn = DateTime.Now.ToString("yyyyMMdd_HHmmss"),
                     FileName = documentUpload.FileName,
                 };
 
                 await collection.UpsertAsync(entry);
             }
+            idTracker.LastIdUsed = (int) idValue;
+
+            await _context.SaveChangesAsync();
         }
 
         public async Task<List<DocumentUploadRAGEntry>> Search(string promptOrQuestion)
         {
             var vectorStore = new QdrantVectorStore(new QdrantClient("localhost"), ownsClient: true);
 
-            var collection = new QdrantCollection<Guid, DocumentUploadRAGEntry>(
+            var collection = new QdrantCollection<ulong, DocumentUploadRAGEntry>(
                 new QdrantClient("localhost"),
                 _ragCollectionName,
                 ownsClient: true);
@@ -108,19 +123,47 @@ namespace SemanticSwamp.SK.RAG
 
             var result = new List<DocumentUploadRAGEntry>();
 
-            //var searchResult = new List<VectorSe>
-            //var searchVector = (await _textEmbeddingGenerationService.GenerateEmbeddingAsync("What are some security improvements in .NET?"));
-            var options = new VectorSearchOptions<DocumentUploadRAGEntry>
+            var ragCollectionId = await GetCollectionIdFromQuestion(promptOrQuestion);
+
+
+            var options = new VectorSearchOptions<DocumentUploadRAGEntry>();
+
+            if (ragCollectionId > -1)
             {
-                //Filter = (x => x.Index > 10)
-            };
+                options.Filter = (x => x.CollectionId == ragCollectionId);
+            }
+
             await collection.SearchAsync(searchEmbedding, top: 30, options)
                 .ForEachAsync(x =>
                 {
-                    //var blah = x.Record;
                     result.Add(x.Record);
-                    //var sto = 1;
                 });
+
+            return result;
+        }
+
+        private async Task<int> GetCollectionIdFromQuestion(string question)
+        {
+            var result = -1;
+            var chatHistory = new ChatHistory();
+            var existing = String.Join(',', _context.Collections.Select(x => x.Name).ToList());
+            var prompt = "Here are a list of collections : [" + existing + "] - which best captures this question: " + question;
+
+
+            chatHistory.AddUserMessage([
+                    new TextContent(prompt),
+                    ]);
+
+            chatHistory.AddUserMessage(prompt);
+            var reply = await _chatCompletionService.GetChatMessageContentAsync(chatHistory);
+
+            var content = reply.Content.Replace("*", "").Replace("[", "").Replace("]", "");
+
+            var ragCollection = _context.Collections.FirstOrDefault(x => x.Name == content);
+            if (ragCollection != null)
+            {
+                result = ragCollection.Id;
+            }
 
             return result;
         }
