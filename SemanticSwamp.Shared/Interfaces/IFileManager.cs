@@ -11,7 +11,7 @@ namespace SemanticSwamp.Shared.Interfaces
     public interface IFileManager
     {
         Task<DocumentUpload> ProcessUpload(FileUploadDTO fileUploadDTO);
-        Task<string> GetTextSummary(string base64Data);
+        Task<string> GetTextSummary(string base64Data, bool isPDF = false);
         Task<string> GetTextFileSummaryFromPath(LocalFileTypes localFileTypes);
 
     }

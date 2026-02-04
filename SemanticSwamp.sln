@@ -17,6 +17,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SampleData", "SampleData", 
 	ProjectSection(SolutionItems) = preProject
 		SampleData\DirtyBird-Wikipedia.html = SampleData\DirtyBird-Wikipedia.html
 		SampleData\pg1727_TheOdyssey.txt = SampleData\pg1727_TheOdyssey.txt
+		SampleData\Samantha_Lopez.pdf = SampleData\Samantha_Lopez.pdf
 		SampleData\SampleAIGeneratedResume.txt = SampleData\SampleAIGeneratedResume.txt
 		top5movies.txt = top5movies.txt
 	EndProjectSection

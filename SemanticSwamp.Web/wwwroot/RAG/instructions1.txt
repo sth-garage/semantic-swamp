@@ -1,0 +1,1539 @@
+﻿Below is a webpage made up of HTML/CS/JS in one file.
+
+Redesign the site to be friendlier using any style you choose - complete radical redesigns are good
+
+Maintain all existing functionality - but refactoring to fit a different layout is fine.
+
+Go wild with the restyling - make any DOM changes needed but maintain functionality.
+
+The site should be fun, inviting, have cool effects / animations - changing the color scheme or creating a new one is good
+
+Do a complete redesign, but keep the title as 'Semantic Swamp' and keep the avatar 'Semantigator'
+
+Return the result as a single valid HTML/CS/JS file
+
+------------------EXISTING---------------------------------------------
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Semantic Swamp</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <!-- Font Awesome (used by document download icon) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <style>
+        :root {
+            /* Gator Bytes vibrant color palette */
+            --gb-blue-800: #63B3ED;
+            --gb-blue-700: #4591E2;
+            --gb-purple-800: #8F5D9C;
+            --gb-dark-purple: #362730;
+            --gb-pink: #E164A7;
+            --gb-bg: #fefae0;
+            --gb-surface: rgba(255, 255, 255, 0.96);
+            --gb-border: rgba(40, 54, 24, 0.18);
+            --gb-text: #1c1f13;
+            --gb-muted: #6b705c;
+            --app-shell-gradient: linear-gradient(135deg, #63B3ED 0%, #4591E2 30%, #8F5D9C 70%, #E164A7 100%);
+            --header-gradient: linear-gradient(96deg, #63B3ED 0%, #4591E2 36%, #8F5D9C 100%);
+            --chat-assistant: rgba(143, 93, 156, 0.10);
+            --chat-user: rgba(69, 145, 226, 0.12);
+            --chat-system: rgba(54, 39, 48, 0.08);
+            --shadow-1: 0 10px 28px rgba(54, 39, 48, 0.10);
+            --shadow-2: 0 18px 50px rgba(54, 39, 48, 0.16);
+            --ring-focus: 0 0 0 3px rgba(225, 100, 167, 0.34);
+            /* Chat area images */
+            --assistant-avatar-url: url(Images/chat.png);
+            --assistant-avatar-thinking-url: url(Images/chat-thinking.png);
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: "Barlow", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            color: var(--gb-text);
+            background: var(--app-shell-gradient);
+            overflow: hidden;
+        }
+
+        .main-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .app-content {
+            width: 90%;
+            height: 95%;
+            display: flex;
+            padding: 24px 28px 28px 28px;
+        }
+
+        /* Chat pane */
+        .chat-pane {
+            flex: 1 1 auto;
+            min-width: 0;
+            background: var(--gb-surface);
+            border: 1px solid var(--gb-border);
+            border-radius: 18px;
+            box-shadow: var(--shadow-2);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pane-header-bar {
+            padding: 14px 18px 12px 18px;
+            border-bottom: 1px solid var(--gb-border);
+            background: linear-gradient(90deg, rgba(69, 145, 226, 0.14), rgba(225, 100, 167, 0.18));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pane-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            color: var(--gb-blue-800);
+        }
+
+        /* Avatar */
+        .avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #63B3ED, #8F5D9C);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 8px rgba(54, 39, 48, 0.18);
+            overflow: hidden;
+            border: 2.5px solid rgba(254, 250, 224, 0.95);
+        }
+
+            .avatar img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                display: block;
+            }
+
+        /* Chat messages area */
+        .chat-messages-area {
+            flex: 1 1 auto;
+            margin: 14px 14px 0 14px;
+            border-radius: 14px;
+            border: 1px solid var(--gb-border);
+            background: #FEFEFE;
+            padding: 16px 12px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            min-height: 200px;
+            position: relative;
+        }
+
+        /* Input row */
+        .chat-input-row {
+            display: flex;
+            gap: 12px; /* fixed (was 12x) */
+            align-items: center;
+            padding: 14px;
+            border-top: 1px solid var(--gb-border);
+            background-color: #ECECEC;
+        }
+
+        #sendMessage.form-control {
+            border-radius: 12px;
+            background: rgba(254, 250, 224, 0.95);
+            border: 1px solid var(--gb-border);
+            color: var(--gb-text);
+            padding: 12px 14px;
+            font-size: 1.05rem;
+        }
+
+        #sendMessage:focus {
+            border-color: var(--gb-pink);
+            box-shadow: var(--ring-focus);
+        }
+
+        /* Buttons */
+        #sendButton.btn,
+        #uploadBtn.btn,
+        #uploadFileBtn.btn,
+        #documentsBtn.btn {
+            background: linear-gradient(180deg, #E164A7, #8F5D9C);
+            color: #fff;
+            font-weight: 800;
+            border-radius: 12px;
+            padding: 0.62em 1.4em;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 22px rgba(225, 100, 167, 0.35);
+        }
+
+            #sendButton.btn:disabled,
+            #uploadBtn.btn:disabled,
+            #uploadFileBtn.btn:disabled,
+            #documentsBtn.btn:disabled {
+                background: rgba(225, 100, 167, 0.35);
+                color: rgba(54, 39, 48, 0.8);
+                box-shadow: none;
+                border-color: rgba(225, 100, 167, 0.55);
+            }
+
+            #sendButton.btn:not(:disabled):hover,
+            #uploadBtn.btn:not(:disabled):hover,
+            #uploadFileBtn.btn:not(:disabled):hover,
+            #documentsBtn.btn:not(:disabled):hover {
+                background: linear-gradient(180deg, #e87bb3, #9b6ca7);
+            }
+
+        /* Custom local file type dropdown styling */
+        .custom-local-file-type {
+            background-color: #8f5d9c91; /* var(--gb-purple-800); */
+            border: 1px solid var(--gb-border);
+            color: var(--gb-text);
+        }
+
+        #localFileTypeDropdown > option {
+            background-color: antiquewhite;
+        }
+        
+        .custom-local-file-type option {
+            color: var(--gb-text);
+        }
+
+        /* Test local file button styling */
+        #uploadFileBtn.test-local-file-btn {
+            background: linear-gradient(180deg, var(--gb-pink), var(--gb-purple-800));
+            color: #fff;
+        }
+
+            #uploadFileBtn.test-local-file-btn:hover {
+                background: linear-gradient(180deg, var(--gb-pink), var(--gb-purple-800));
+            }
+
+        /* Chat message bubble (STYLE) */
+        .chat-message {
+            display: flex;
+            margin: 10px 8px;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+            .chat-message[data-role="Client"] {
+                justify-content: flex-end;
+            }
+
+            .chat-message[data-role="Assistant"],
+            .chat-message[data-role="System"] {
+                justify-content: flex-start;
+            }
+
+        .chat-bubble {
+            position: relative;
+            padding: 12px 14px 22px;
+            border-radius: 14px;
+            border: 1.5px solid var(--gb-border);
+            background: rgba(255, 255, 255, 0.96);
+            color: var(--gb-text);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+            line-height: 1.45;
+            max-width: min(900px, 82%);
+            overflow-wrap: anywhere;
+            min-width: 500px !important;
+            min-height: 90px !important;
+        }
+
+        .chat-message[data-role="Client"] .chat-bubble {
+            background: var(--chat-user);
+            border-color: rgba(69, 145, 226, 0.55);
+        }
+
+        .chat-message[data-role="Assistant"] .chat-bubble {
+            background: var(--chat-assistant);
+            border-color: rgba(143, 93, 156, 0.55);
+        }
+
+        .chat-message[data-role="System"] .chat-bubble {
+            background: var(--chat-system);
+            border-color: rgba(54, 39, 48, 0.35);
+        }
+
+        #documentsModal > .modal-dialog > .modal-content {
+            min-width: 80em !important;
+            margin-left: -15em !important;
+        }
+
+        .Role-Client > .chat-bubble {
+            min-height: 0px !important;
+            padding: 10px;
+            padding-left: 25px;
+            padding-right: 25px;
+            min-width: 0px !important;
+        }
+        /* Latency badge */
+        .latency-badge {
+            position: absolute;
+            right: 10px;
+            bottom: 6px;
+            font-size: 0.8rem;
+            color: var(--gb-blue-800);
+            background: rgba(254, 250, 224, 0.95);
+            border: 1px solid var(--gb-border);
+            border-radius: 10px;
+            padding: 2px 8px;
+            cursor: pointer;
+        }
+
+            .latency-badge:hover {
+                background: rgba(254, 250, 224, 1);
+            }
+
+            .latency-badge:focus {
+                outline: 2px solid var(--gb-blue-700);
+                outline-offset: 1px;
+            }
+
+        /* Modal styling for chat details */
+        .modal-content {
+            border-radius: 14px;
+            border: 1px solid var(--gb-border);
+        }
+
+        .modal-header {
+            background: rgba(254, 250, 224, 0.95);
+            border-bottom: 1px solid var(--gb-border);
+        }
+
+        .modal-body pre {
+            white-space: pre-wrap;
+            border-radius: 10px;
+        }
+
+        .md-line {
+            margin-bottom: 8px;
+        }
+
+        .md-label {
+            font-weight: 800;
+            color: var(--gb-blue-800);
+            margin-right: 6px;
+        }
+
+        .md-meta-wrap {
+            margin-top: 10px;
+            padding: 12px;
+            background: rgba(254, 250, 224, 0.85);
+            border: 1px solid var(--gb-border);
+            border-radius: 10px;
+        }
+
+        .md-subtitle {
+            font-weight: 800;
+            color: var(--gb-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            font-size: 0.85rem;
+            margin: 6px 0 8px 0;
+        }
+
+        .token-usage-list {
+            margin: 0 0 8px 0;
+            padding-left: 16px;
+        }
+
+            .token-usage-list li {
+                margin: 2px 0;
+            }
+
+        .refusal-box {
+            border: 2px solid var(--gb-pink);
+            background: #fff5f5;
+            color: #7f1d1d;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-top: 8px;
+            font-weight: 700;
+        }
+
+        .pre-raw {
+            background: #0b1020;
+            color: #e4e8f8;
+            border: 1px solid #1f2a44;
+            padding: 12px;
+            border-radius: 10px;
+            max-height: 420px;
+            overflow: auto;
+        }
+
+        .copy-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Images in chat area (latest anchor) */
+        .chat-message.latest-assistant-anchor[data-role="Assistant"] {
+            display: grid !important;
+            grid-template-columns: 72px 1fr;
+            gap: 10px;
+            align-items: end;
+            justify-items: start;
+        }
+
+            .chat-message.latest-assistant-anchor[data-role="Assistant"] > .chat-bubble {
+                grid-column: 2;
+            }
+
+            .chat-message.latest-assistant-anchor[data-role="Assistant"]::before {
+                content: "";
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                border: 2px solid rgba(254, 250, 224, 0.96);
+                box-shadow: 0 8px 18px rgba(54, 39, 48, 0.35);
+                background-color: #fff;
+                background-image: var(--assistant-avatar-url);
+                background-position: center;
+                background-repeat: no-repeat;
+                background-size: cover;
+                grid-column: 1;
+                align-self: end;
+                justify-self: start;
+            }
+
+        .chat-message.latest-assistant-anchor[data-role="Client"] {
+            display: grid !important;
+            grid-template-columns: 1fr;
+            grid-template-rows: auto auto;
+            justify-items: end;
+        }
+
+            .chat-message.latest-assistant-anchor[data-role="Client"] > .chat-bubble {
+                grid-row: 1;
+            }
+
+            .chat-message.latest-assistant-anchor[data-role="Client"]::after {
+                content: "";
+                width: 75px;
+                height: 75px;
+                border: 2px solid rgba(254, 250, 224, 0.96);
+                box-shadow: 0 6px 14px rgba(54, 39, 48, 0.35);
+                background-color: #fff;
+                background-image: var(--assistant-avatar-thinking-url);
+                background-position: center;
+                background-repeat: no-repeat;
+                background-size: cover;
+                grid-row: 2;
+                margin-top: 6px;
+                margin-right: 90%;
+                border-radius: 18px;
+            }
+
+        /* Welcome message */
+        .welcome-message {
+            text-align: center;
+            color: var(--gb-purple-800);
+            font-size: 1.2rem;
+            padding: 12px 8px 18px;
+        }
+
+            .welcome-message h1 {
+                font-size: 2.5rem;
+                margin-bottom: 20px;
+                color: var(--gb-blue-800);
+                text-shadow: 1px 1px 2px rgba(54, 39, 48, 0.5);
+            }
+
+        /* Highlights */
+        .highlight {
+            color: var(--gb-pink);
+            font-weight: bold;
+        }
+
+        .hopeful-gradient {
+            background: linear-gradient(135deg, #63B3ED 0%, #8F5D9C 50%, #E164A7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+        }
+
+        /* Documents table enhancements (CURRENT + requested changes) */
+        #documentsListContainer .table tbody tr.doc-row {
+            background-color: var(--gb-surface);
+            cursor: pointer;
+        }
+
+            #documentsListContainer .table tbody tr.doc-row:hover {
+                background-color: var(--gb-blue-700);
+            }
+
+            #documentsListContainer .table tbody tr.doc-row.selected {
+                background-color: var(--gb-blue-800);
+            }
+
+        /* Summary row styling */
+        #documentsListContainer .table tbody tr.summary-row td {
+            background: rgba(254, 250, 224, 0.85);
+            border-top: none;
+            border-bottom: 1px solid var(--gb-border);
+        }
+
+        /* Keep download column tight and at far right */
+        #documentsListContainer th.download-col,
+        #documentsListContainer td.download-col {
+            width: 1%;
+            white-space: nowrap;
+            text-align: right;
+        }
+
+        #documentsListContainer td.expand-col {
+            width: 40px;
+            text-align: center;
+        }
+
+        #documentsListContainer .expand-indicator {
+            display: inline-block;
+            width: 22px;
+            font-weight: 900;
+            border: 1px solid var(--gb-border);
+            border-radius: 8px;
+            padding: 2px 0;
+            background: rgba(254, 250, 224, 0.95);
+        }
+
+        /* Ensure clicking the download button feels like a button (and not row click) */
+        #documentsListContainer .download-btn {
+            cursor: pointer;
+        }
+
+        #termsContainer > label {
+            background-color: #6194df !important;
+            padding: 10px;
+            font-size: 1em;
+        }
+
+        #sendButton {
+            margin-left: 10px !important;
+        }
+
+        #addedTermsContainer > .badge {
+            background-color: cadetblue !important;
+            font-size: 1em;
+        }
+        /* Style for term badges with checkboxes */
+        .badge input[type=checkbox] {
+            margin-right: .25rem;
+        }
+
+        #addTermBtn {
+            width: 7em !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-container">
+        <div class="app-content">
+            <section class="chat-pane shadow" id="chatPane" role="main" aria-label="Gator Bytes chat">
+                <div class="pane-header-bar">
+                    <div class="pane-title">
+                        <span class="avatar" title="Semantigator avatar">
+                            <img id="semantigatorAvatar" alt="Semantigator avatar"
+                                 src="Images/chat.png"
+                                 onerror="this.style.display='none'" />
+                        </span>
+                        <span>Chat with Semantigator</span>
+                    </div>
+                </div>
+
+                <div class="chat-messages-area" id="chatArea" tabindex="0" aria-label="Chat messages">
+                    <div class="welcome-message">
+                        <h1>Welcome to <span class="hopeful-gradient">Semantic Swamp</span></h1>
+                    </div>
+                </div>
+
+                <div class="chat-input-row">
+                    <input type="text"
+                           id="sendMessage"
+                           class="form-control"
+                           placeholder="Chat with Semantigator..."
+                           aria-label="Message to send"
+                           autocomplete="off"
+                           disabled />
+                    <button id="sendButton" class="btn" type="button" disabled>Send</button>
+
+                    <!-- Upload File button -->
+                    <button id="uploadBtn" class="btn ms-2" type="button"
+                            data-bs-toggle="modal" data-bs-target="#uploadModal" disabled>
+                        Upload
+                    </button>
+
+                    <!-- Documents button -->
+                    <button id="documentsBtn" class="btn ms-2" type="button"
+                            data-bs-toggle="modal" data-bs-target="#documentsModal" disabled>
+                        Documents
+                    </button>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Chat Detail Modal -->
+    <div class="modal fade" id="chatDetailModal" tabindex="-1" aria-labelledby="chatDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="chatDetailModalLabel">Message Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="chatDetailModalBody"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload File Modal -->
+    <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" style="margin-top: 30px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadModalLabel">Upload File</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <!-- File selection -->
+                    <div class="mb-3">
+                        <label class="form-label">File</label>
+                        <button type="button" id="chooseFileBtn" class="btn btn-outline-primary me-2">Choose File</button>
+                        <span id="selectedFileName"></span>
+                        <input type="file" id="uploadFileInput" style="display:none;" accept=".txt" />
+                    </div>
+
+                    <!-- Collections dropdown -->
+                    <div class="mb-3">
+                        <label for="collectionsDropdown" class="form-label">Collections</label>
+                        <div id="collectionSelectionWrapper" class="d-flex align-items-center">
+                            <select class="form-select me-2" id="collectionsDropdown"></select>
+                            <input type="text" class="form-control d-none me-2" id="newCollectionInput" placeholder="New Collection Name" />
+                            <button type="button" class="btn btn-outline-secondary toggle-btn" data-target="collection">Add</button>
+                        </div>
+                    </div>
+
+                    <!-- Categories dropdown -->
+                    <div class="mb-3">
+                        <label for="categoriesDropdown" class="form-label">Categories</label>
+                        <div id="categorySelectionWrapper" class="d-flex align-items-center">
+                            <select class="form-select me-2" id="categoriesDropdown"></select>
+                            <input type="text" class="form-control d-none me-2" id="newCategoryInput" placeholder="New Category Name" />
+                            <button type="button" class="btn btn-outline-secondary toggle-btn" data-target="category">Add</button>
+                        </div>
+                    </div>
+
+                    <!-- Terms multiselect -->
+                    <div class="mb-3">
+                        <label class="form-label">Terms</label>
+                        <div id="termsContainer" style="max-height:150px; overflow-y:auto;">
+                            <!-- checkboxes will be inserted here -->
+                        </div>
+                        <div class="d-flex align-items-center mt-2">
+                            <input type="text" id="newTermInput" class="form-control me-2" placeholder="New term name" />
+                            <button type="button" id="addTermBtn" class="btn btn-outline-primary">Add Term</button>
+                        </div>
+                        <div id="addedTermsContainer" class="mt-2"></div>
+                    </div>
+
+                    <!-- Local File Type dropdown -->
+                    <div class="mb-3">
+                        <label for="localFileTypeDropdown" class="form-label">Local File Type</label>
+                        <select id="localFileTypeDropdown" class="form-select custom-local-file-type">
+                            <option value="" selected>Select a local file</option>
+                        </select>
+                    </div>
+
+                    <!-- Spinner -->
+                    <div id="uploadSpinner" class="text-center my-3 d-none">
+                        <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Uploading...</span></div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" id="uploadFileBtn" class="btn">Upload File</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Documents Modal -->
+    <div class="modal fade" id="documentsModal" tabindex="-1" aria-labelledby="documentsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="documentsModalLabel">Document Uploads</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div id="documentsListContainer" style="max-height:400px;overflow-y:auto;">
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="expand-col"></th>
+                                    <th>Name</th>
+                                    <th>Created On</th>
+                                    <th>Collection</th>
+                                    <th>Category</th>
+                                    <th>Is Active</th>
+                                    <th>Processed</th>
+                                    <th class="download-col"></th> <!-- download button moved to far right -->
+                                </tr>
+                            </thead>
+                            <tbody id="documentsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Local File Result Modal -->
+    <div class="modal fade" id="localFileResultModal" tabindex="-1" aria-labelledby="localFileResultModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="localFileResultModalLabel">Local File Result</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body" style="max-height:400px; overflow-y:auto;">
+                    <!-- Result content will be inserted here -->
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS deps -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>$(function () {
+            const $chatArea = $("#chatArea");
+            const $sendMessage = $("#sendMessage");
+            const $sendButton = $("#sendButton");
+            const $uploadBtn = $("#uploadBtn");
+            const $documentsBtn = $("#documentsBtn");
+
+            const LATEST_ANCHOR_CLASS = "latest-assistant-anchor";
+
+            /* Connection and state variables */
+            let socket;
+            const wsUrl = (location.protocol === "https:" ? "wss://" : "ws://") +
+                location.hostname + (location.port ? (":" + location.port) : "") + "/ws";
+            let isWaitingReply = false;           // true while waiting for assistant reply
+            let lastUserMsgTime = null;           // timestamp of the last user message
+            let hasSystemGreeted = false;         // flag to enable inputs after initial greeting
+            const userInputHistory = [];          // history array for arrow key navigation
+            let userInputIndex = -1;
+
+            function enableInputs(state = true) {
+                $sendMessage.prop("disabled", !state);
+                $sendButton.prop("disabled", !state || $sendMessage.val().trim() === "");
+                $uploadBtn.prop("disabled", !state || isWaitingReply);
+                $documentsBtn.prop("disabled", !state);
+            }
+            function disableInputs() { enableInputs(false); }
+
+            /* Escape HTML for safe display */
+            function esc(str) {
+                return String(str)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&#62;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#39;");
+            }
+
+            /* Build and display the message details modal */
+            function buildMessageDetailHTML(msgObj, context = {}) {
+                const metadata = msgObj?.Metadata ?? {};
+                const usage = metadata?.Usage ?? {};
+                const createdAt = metadata?.CreatedAt;
+                const finishReason = metadata?.FinishReason ?? (msgObj.FinishReason || null);
+                const latency = typeof context.latency === 'number' ? context.latency : null;
+
+                $("#chatDetailModalLabel").text(
+                    ["Message Details", ...(latency !== null ? [latency.toFixed(2) + "s"] : [])].join(" • ")
+                );
+
+                const displayTimestamp = createdAt
+                    ? new Date(createdAt).toLocaleString()
+                    : (context.timestamp ?? new Date().toLocaleString());
+
+                const totalTokens = usage?.TotalTokenCount ?? "—";
+                const inTokens = usage?.InputTokenCount ?? "—";
+                const outTokens = usage?.OutputTokenCount ?? "—";
+                const finish = finishReason != null && String(finishReason).trim() !== "" ? esc(finishReason) : "—";
+
+                const rawText = JSON.stringify(msgObj, null, 2);
+                const uid = `raw${Date.now()}${Math.floor(Math.random() * 1000)}`;
+
+                const html = `
+                    ${latency !== null ? `<div class="md-line"><span class="md-label">Latency:</span>${latency.toFixed(2)} seconds</div>` : ""}
+                    <div class="md-line"><span class="md-label">Timestamp:</span>${esc(displayTimestamp)}</div>
+
+                    <div class="md-meta-wrap">
+                        <div class="md-subtitle">Metadata</div>
+                        <div class="md-subtitle" style="margin-top:0.25rem;">Token Usage</div>
+                        <ul class="token-usage-list">
+                            <li>Total Token Count: ${esc(totalTokens)}</li>
+                            <li>Input Token Count: ${esc(inTokens)}</li>
+                            <li>Output Token Count: ${esc(outTokens)}</li>
+                        </ul>
+                        <div class="md-line"><span class="md-label">Finish Reason:</span>${finish}</div>
+                    </div>
+
+                    <div class="accordion mt-3" id="acc-${uid}">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="h-${uid}">
+                                <button class="accordion-button collapsed" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#c-${uid}"
+                                        aria-expanded="false" aria-controls="c-${uid}">Raw Message</button>
+                            </h2>
+                            <div id="c-${uid}" class="accordion-collapse collapse"
+                                 aria-labelledby="h-${uid}" data-bs-parent="#acc-${uid}">
+                                <div class="accordion-body">
+                                    <div class="d-flex justify-content-end mb-2">
+                                        <button class="btn btn-sm btn-outline-primary copy-btn" id="copy-${uid}"
+                                                type="button">Copy</button>
+                                    </div>
+                                    <pre id="pre-${uid}" class="pre-raw">${esc(rawText)}</pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+
+                $("#chatDetailModalBody").html(html);
+
+                // Copy button handler
+                $(`#copy-${uid}`).on('click', async function () {
+                    try {
+                        await navigator.clipboard.writeText(rawText);
+                        this.textContent = 'Copied!';
+                        setTimeout(() => { this.textContent = 'Copy'; }, 1200);
+                    } catch (e) {
+                        // Fallback for older browsers
+                        const pre = $(`#pre-${uid}`)[0];
+                        const range = document.createRange();
+                        range.selectNodeContents(pre);
+                        const sel = window.getSelection();
+                        sel.removeAllRanges(); sel.addRange(range);
+                        try { document.execCommand('copy'); } catch { }
+                        sel.removeAllRanges();
+                    }
+                });
+            }
+
+            /* Mark the latest assistant message as anchor (for visibility) */
+            function setLatestAnchor($el) {
+                $(`.chat-message.${LATEST_ANCHOR_CLASS}`).removeClass(LATEST_ANCHOR_CLASS);
+                if ($el && $el.length) $el.addClass(LATEST_ANCHOR_CLASS);
+            }
+
+            /* Append a message to the chat area */
+            function addMessage(msgObj, isOwn, latencySeconds) {
+                const role = msgObj?.Role?.Label ?? (isOwn ? "Client" : "Assistant");
+
+                let richHtml = '';
+                if (msgObj?.Items && msgObj.Items[0]?.Text) {
+                    richHtml = msgObj.Items[0].Text;
+                } else if (msgObj?.Text) {
+                    richHtml = msgObj.Text;
+                } else if (typeof msgObj === 'string') {
+                    richHtml = msgObj;
+                } else {
+                    richHtml = $('<div/>').text(JSON.stringify(msgObj)).html();
+                }
+
+                const $msgEl = $('<div>')
+                    .addClass('chat-message Role-' + role)
+                    .attr('data-role', role)
+                    .attr('tabindex', 0)
+                    .data('chatMessage', msgObj);
+
+                const $bubble = $('<div>').addClass('chat-bubble').html(richHtml);
+
+                if (role !== "Client" && typeof latencySeconds === 'number') {
+                    const lbl = `${latencySeconds.toFixed(2)} seconds`;
+                    $bubble.append(
+                        `<button class="latency-badge" type="button"
+                                 data-latency="${latencySeconds}"
+                                 aria-label="Response time ${lbl}"
+                                 title="View message details">${lbl}</button>`
+                    );
+                }
+
+                $msgEl.append($bubble);
+                $chatArea.append($msgEl);
+
+                // Scroll to bottom for assistant/system messages
+                if (role !== "Client") {
+                    $chatArea[0].scrollTop = $chatArea[0].scrollHeight;
+                }
+
+                if (role === "Assistant") setLatestAnchor($msgEl);
+
+                return $msgEl;
+            }
+
+            /* WebSocket connection and message handling */
+            function connectSocket() {
+                socket = new WebSocket(wsUrl);
+
+                socket.onopen = () => {
+                    disableInputs();
+                    isWaitingReply = true;
+                    try { socket.send('Introduce yourself'); } catch { }
+                };
+
+                socket.onclose = () => {
+                    disableInputs();
+                    addMessage({ Role: { Label: "System" }, Items: [{ Text: "<em>Connection closed.</em>" }] }, false);
+                    isWaitingReply = false;
+                };
+
+                socket.onerror = () => {
+                    disableInputs();
+                    addMessage({ Role: { Label: "System" }, Items: [{ Text: "<em>A connection error occurred.</em>" }] }, false);
+                    isWaitingReply = false;
+                };
+
+                socket.onmessage = event => {
+                    isWaitingReply = false;
+
+                    const data = event.data;
+                    let obj = null;
+
+                    try { obj = JSON.parse(data); }
+                    catch { obj = { Role: { Label: "Assistant" }, Items: [{ Text: data }] }; }
+
+                    const role = obj?.Role?.Label ?? "Assistant";
+                    let latencyForThis;
+
+                    if (lastUserMsgTime && role !== "Client") {
+                        const now = performance.now();
+                        latencyForThis = (now - lastUserMsgTime) / 1000;
+                        lastUserMsgTime = null;
+                    }
+
+                    addMessage(obj, false, latencyForThis);
+
+                    if (!hasSystemGreeted) {
+                        hasSystemGreeted = true;
+                        enableInputs(true);
+                        $sendMessage.focus();
+                    } else {
+                        enableInputs(true);
+                    }
+                };
+            }
+
+            connectSocket();
+
+            /* Input handling */
+            $sendMessage.on("input", function () {
+                $sendButton.prop("disabled", $sendMessage.val().trim() === "" || isWaitingReply);
+            });
+
+            /* Send message logic */
+            function sendCurrentMessage() {
+                if (!socket || socket.readyState !== WebSocket.OPEN || isWaitingReply) return;
+
+                const text = $sendMessage.val();
+                if (!text.trim()) return;
+
+                userInputHistory.push(text);
+                userInputIndex = userInputHistory.length;
+
+                isWaitingReply = true;
+                lastUserMsgTime = performance.now();
+
+                enableInputs(false);
+
+                const $clientMsg = addMessage({
+                    Role: { Label: "Client" },
+                    Items: [{ Text: $('<div/>').text(text).html() }],
+                    AuthorName: "Client"
+                }, true);
+
+                // Mark the user's message as anchor (thinking state image)
+                setLatestAnchor($clientMsg);
+
+                socket.send(text);
+
+                $sendMessage.val("");
+                setTimeout(() => { $sendMessage.val("").focus(); }, 3000);
+                $sendButton.prop('disabled', true);
+            }
+
+            $('#sendButton').on('click', sendCurrentMessage);
+
+            $('#sendMessage').on('keydown', function (e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    sendCurrentMessage();
+                } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                    if (e.key === "ArrowUp") {
+                        if (userInputIndex > 0) {
+                            userInputIndex--;
+                            $sendMessage.val(userInputHistory[userInputIndex]);
+                        }
+                    } else {
+                        if (userInputIndex < userInputHistory.length - 1) {
+                            userInputIndex++;
+                            $sendMessage.val(userInputHistory[userInputIndex]);
+                        } else {
+                            userInputIndex = userInputHistory.length;
+                            $sendMessage.val("");
+                        }
+                    }
+                }
+            });
+
+            /* Click on latency badge to view details */
+            $(document).on('click', '.latency-badge', function (e) {
+                e.stopPropagation();
+                const $badge = $(this);
+                const $msg = $badge.closest('.chat-message');
+                const msgObj = $msg.data('chatMessage') || {};
+                const latency = parseFloat($badge.attr('data-latency'));
+                buildMessageDetailHTML(msgObj, { latency });
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('chatDetailModal')).show();
+            });
+
+            /* Keyboard accessibility for latency badge */
+            $(document).on('keydown', '.latency-badge', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    $(this).trigger('click');
+                }
+            });
+
+            /* Ensure the latest assistant message is always visible */
+            function ensureLatestAnchorVisible() {
+                const $latest = $('.chat-message.' + LATEST_ANCHOR_CLASS);
+                if ($latest.length) {
+                    const chatArea = $chatArea[0];
+                    const anchorPos = $latest.position().top;
+                    const chatHeight = chatArea.clientHeight;
+                    if (anchorPos + $latest.outerHeight() > chatHeight) {
+                        chatArea.scrollTop = chatArea.scrollHeight;
+                    }
+                }
+            }
+
+            /* Wrap original addMessage to include visibility logic */
+            const origAddMessage = addMessage;
+            addMessage = function (...args) {
+                const result = origAddMessage.apply(this, args);
+                setTimeout(ensureLatestAnchorVisible, 0);
+                return result;
+            };
+
+            /* Initial UI state: inputs disabled until socket connects */
+            enableInputs(false);
+
+            /* ------- Upload Modal Logic -------- */
+
+            const newTermNames = [];
+
+            // Global data arrays and maps for collections, categories, terms
+            let collectionsData = [];
+            let categoriesData = [];
+            let termsData = [];
+            const collectionMap = {}; // id->name
+            const categoryMap = {};
+
+            function getId(obj) { return obj.id ?? obj.Id ?? obj.ID; }
+            function getName(obj) { return obj.name ?? obj.Name ?? obj.Term ?? ''; }
+
+            function populateSelect(selector, array) {
+                const $sel = $(selector);
+                $sel.empty();
+                $.each(array, function (index, obj) {
+                    const id = getId(obj);
+                    const name = getName(obj);
+                    $sel.append(`<option value="${esc(id)}">${esc(name)}</option>`);
+                });
+                if ($sel.children().length > 0) {
+                    $sel.val($sel.children().first().val());
+                }
+            }
+
+            function populateTerms() {
+                const $termsContainer = $('#termsContainer');
+                $termsContainer.empty();
+                $.each(termsData, function (index, obj) {
+                    const id = getId(obj);
+                    const name = getName(obj);
+                    const html = `<label class="badge bg-light border rounded-pill me-2 mb-2 d-inline-flex align-items-center">
+                                    <input type="checkbox" value="${esc(id)}" class="me-1 ms-1"/>
+                                    ${esc(name)}
+                                  </label>`;
+                    $termsContainer.append(html);
+                });
+            }
+
+            async function fetchCollections() {
+                try {
+                    const res = await fetch('/api/collections/simple');
+                    if (!res.ok) throw new Error('Failed to load collections');
+                    const data = await res.json();
+                    collectionsData = data;
+
+                    Object.keys(collectionMap).forEach(k => delete collectionMap[k]);
+                    data.forEach(obj => {
+                        const id = getId(obj);
+                        const name = getName(obj);
+                        collectionMap[id] = name;
+                    });
+
+                    populateSelect('#collectionsDropdown', collectionsData);
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            async function fetchCategories() {
+                try {
+                    const res = await fetch('/api/categories/simple');
+                    if (!res.ok) throw new Error('Failed to load categories');
+                    const data = await res.json();
+                    categoriesData = data;
+
+                    Object.keys(categoryMap).forEach(k => delete categoryMap[k]);
+                    data.forEach(obj => {
+                        const id = getId(obj);
+                        const name = getName(obj);
+                        categoryMap[id] = name;
+                    });
+
+                    populateSelect('#categoriesDropdown', categoriesData);
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            async function fetchTerms() {
+                try {
+                    const res = await fetch('/api/terms/simple');
+                    if (!res.ok) throw new Error('Failed to load terms');
+                    const data = await res.json();
+                    termsData = data;
+                    populateTerms();
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            async function fetchLocalFileTypes() {
+                try {
+                    const res = await fetch('/api/Enum/UploadLocalFileType');
+                    if (!res.ok) throw new Error('Failed to load local file types');
+                    const data = await res.json(); // array of strings
+                    const $sel = $('#localFileTypeDropdown');
+                    $sel.empty();
+                    $sel.append('<option value="" selected>Select a local file</option>');
+                    $.each(data, function (index, name) {
+                        $sel.append(`<option value="${esc(name)}">${esc(name)}</option>`);
+                    });
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            async function loadInitialData() {
+                await Promise.all([fetchCollections(), fetchCategories(), fetchTerms(), fetchLocalFileTypes()]);
+            }
+
+            async function downloadOriginalFile(id) {
+                try {
+                    const response = await fetch(`/api/DocumentUploads/DownloadOriginalDocument?documentUploadId=${encodeURIComponent(id)}`);
+                    if (!response.ok) {
+                        alert("Failed to download file!");
+                        return;
+                    }
+
+                    let downloadFilename = 'download';
+                    const disposition = response.headers.get('Content-Disposition') || '';
+                    // Attempt to parse filename/filename*
+                    const match =
+                        /filename\*\s*=\s*UTF-8''([^;]+)|filename\s*=\s*"?([^\";]+)"?/i.exec(disposition);
+                    if (match) {
+                        downloadFilename = decodeURIComponent((match[1] || match[2] || '').trim());
+                    }
+
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = downloadFilename || 'download';
+                    document.body.appendChild(a);
+                    a.click();
+
+                    setTimeout(() => {
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                    }, 100);
+
+                } catch (err) {
+                    alert("Error: " + err);
+                }
+            }
+
+            // Call on startup
+            loadInitialData();
+
+            /* Toggle between dropdown and text input for collection/category */
+            $(document).on('click', '.toggle-btn', function () {
+                const target = $(this).data('target');
+                if (target === 'collection') {
+                    const $select = $('#collectionsDropdown');
+                    const $input = $('#newCollectionInput');
+                    const $btn = $(this);
+                    if ($select.is(':visible')) {
+                        $select.addClass('d-none');
+                        $input.removeClass('d-none').focus();
+                        $btn.text('Back');
+                    } else {
+                        $select.removeClass('d-none');
+                        $input.addClass('d-none').val('');
+                        $btn.text('Add');
+                    }
+                } else if (target === 'category') {
+                    const $select = $('#categoriesDropdown');
+                    const $input = $('#newCategoryInput');
+                    const $btn = $(this);
+                    if ($select.is(':visible')) {
+                        $select.addClass('d-none');
+                        $input.removeClass('d-none').focus();
+                        $btn.text('Back');
+                    } else {
+                        $select.removeClass('d-none');
+                        $input.addClass('d-none').val('');
+                        $btn.text('Add');
+                    }
+                }
+            });
+
+            /* Add new term button logic */
+            $('#addTermBtn').on('click', function () {
+                const termName = $('#newTermInput').val().trim();
+                if (!termName) return;
+
+                newTermNames.push(termName);
+
+                const $badge = $('<span>')
+                    .addClass('badge bg-secondary me-1 mb-1')
+                    .text(termName + ' ');
+
+                const $removeBtn = $('<button type="button" class="btn-close btn-close-white ms-1 p-0" aria-label="Remove term"></button>');
+                $removeBtn.on('click', function () {
+                    const idx = newTermNames.indexOf(termName);
+                    if (idx !== -1) newTermNames.splice(idx, 1);
+                    $(this).parent().remove();
+                });
+
+                $badge.append($removeBtn);
+                $('#addedTermsContainer').append($badge);
+                $('#newTermInput').val('');
+            });
+
+            // File selection handling
+            const $chooseFileBtn = $('#chooseFileBtn');
+            const $fileInput = $('#uploadFileInput');
+            const $selectedName = $('#selectedFileName');
+
+            $chooseFileBtn.on('click', function () {
+                $fileInput.trigger('click');
+            });
+
+            $fileInput.on('change', function () {
+                const file = this.files[0];
+                $selectedName.text(file ? file.name : '');
+            });
+
+            /* Local file type selection change handler */
+            $('#localFileTypeDropdown').on('change', function () {
+                const selected = $(this).val();
+                const $uploadFileBtn = $('#uploadFileBtn');
+
+                const localTestMode = selected && selected !== '';
+
+                // Disable/enable other fields
+                $('#chooseFileBtn').prop('disabled', localTestMode);
+                $('#uploadFileInput').prop('disabled', localTestMode);
+                $('#collectionsDropdown').prop('disabled', localTestMode);
+                $('#categoriesDropdown').prop('disabled', localTestMode);
+                $('#termsContainer input[type="checkbox"]').prop('disabled', localTestMode);
+                $('#addTermBtn').prop('disabled', localTestMode);
+                $('#newCollectionInput').prop('disabled', localTestMode);
+                $('#newCategoryInput').prop('disabled', localTestMode);
+
+                if (localTestMode) {
+                    $uploadFileBtn.text(`Test Local File ${selected}`);
+                    $uploadFileBtn.addClass('test-local-file-btn');
+                } else {
+                    $uploadFileBtn.text('Upload File');
+                    $uploadFileBtn.removeClass('test-local-file-btn');
+                }
+            });
+
+            /* Upload button click */
+            $('#uploadFileBtn').on('click', async function () {
+                const localType = $('#localFileTypeDropdown').val();
+
+                if (localType && localType !== '') {
+                    // Test local file
+                    try {
+                        const res = await fetch('/api/file/UploadLocalFileType', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ localFileName: localType })
+                        });
+                        if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+                        const resultText = await res.text();
+
+                        $('#localFileResultModal')
+                            .find('.modal-body')
+                            .html(`<pre class="pre-raw">${esc(resultText)}</pre>`);
+
+                        bootstrap.Modal.getOrCreateInstance(document.getElementById('localFileResultModal')).show();
+                    } catch (err) {
+                        console.error(err);
+                        alert(`Upload failed: ${err.message}`);
+                    }
+                    return;
+                }
+
+                // Standard file upload
+                const file = $fileInput[0].files[0];
+                if (!file) { alert('Please choose a file first.'); return; }
+                if (!/\.txt$/i.test(file.name)) {
+                    alert('Only .txt files are allowed.');
+                    return;
+                }
+
+                const collectionId = $('#collectionsDropdown').val();
+                const categoryId = $('#categoriesDropdown').val();
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('collectionId', collectionId);
+                formData.append('categoryId', categoryId);
+
+                const newCollectionName = $('#newCollectionInput').val().trim();
+                const newCategoryName = $('#newCategoryInput').val().trim();
+
+                if (newCollectionName) formData.append('newCollectionName', newCollectionName);
+                if (newCategoryName) formData.append('newCategoryName', newCategoryName);
+
+                // Term IDs from checkboxes
+                const termIds = [];
+                $('#termsContainer input[type="checkbox"]:checked').each(function () {
+                    termIds.push($(this).val());
+                });
+                if (termIds.length > 0) formData.append('termIds', JSON.stringify(termIds));
+
+                // New terms names
+                if (newTermNames.length > 0) formData.append('newTermNames', JSON.stringify(newTermNames));
+
+                const $btn = $(this);
+                $btn.prop('disabled', true);
+                $('#uploadSpinner').removeClass('d-none');
+
+                try {
+                    const res = await fetch('/api/file/upload', { method: 'POST', body: formData });
+                    if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+                    const resultText = await res.text();
+                    alert(resultText || 'Upload succeeded');
+
+                    // Bootstrap 5: hide modal via API (not jQuery plugin)
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('uploadModal')).hide();
+
+                    // Refresh dropdowns and terms
+                    await loadInitialData();
+                } catch (err) {
+                    console.error(err);
+                    alert(`Upload failed: ${err.message}`);
+                } finally {
+                    $('#uploadSpinner').addClass('d-none');
+                    $btn.prop('disabled', false);
+                    await loadInitialData();
+                }
+            });
+
+            /* Reset modal fields when closed */
+            $('#uploadModal').on('hidden.bs.modal', async function () {
+                await loadInitialData();
+
+                $fileInput.val('');
+                $selectedName.text('');
+
+                const $col = $('#collectionsDropdown');
+                const $cat = $('#categoriesDropdown');
+                if ($col.children().length > 0) $col.val($col.children().first().val());
+                if ($cat.children().length > 0) $cat.val($cat.children().first().val());
+
+                $col.removeClass('d-none');
+                $cat.removeClass('d-none');
+
+                $('#newCollectionInput').addClass('d-none').val('');
+                $('#newCategoryInput').addClass('d-none').val('');
+
+                $('.toggle-btn[data-target="collection"]').text('Add');
+                $('.toggle-btn[data-target="category"]').text('Add');
+
+                $('#termsContainer input[type="checkbox"]').prop('checked', false);
+                $('#addedTermsContainer').empty();
+                newTermNames.length = 0;
+
+                // Reset local file type dropdown to default
+                $('#localFileTypeDropdown').val('').trigger('change');
+            });
+
+            /* -------- Documents modal logic -------- */
+
+            function getDocumentsTableColspan() {
+                const n = $('#documentsListContainer table thead th').length;
+                return n > 0 ? n : 8;
+            }
+
+            function toggleDocSummary($row) {
+                const $indicator = $row.find('.expand-indicator');
+                const colspan = getDocumentsTableColspan();
+
+                if ($row.hasClass('expanded')) {
+                    // collapse
+                    $row.next('.summary-row').remove();
+                    $row.removeClass('expanded selected').attr('aria-expanded', 'false');
+                    $indicator.text('+');
+                } else {
+                    // expand
+                    const summaryRaw = $row.data('summary') || '';
+                    const summaryHtml = summaryRaw ? esc(summaryRaw) : '<em>No summary available.</em>';
+
+                    const $summaryRow = $(
+                        `<tr class="summary-row">
+                            <td colspan="${colspan}" class="p-2">${summaryHtml}</td>
+                         </tr>`
+                    );
+
+                    $row.after($summaryRow);
+                    $row.addClass('expanded selected').attr('aria-expanded', 'true');
+                    $indicator.text('-');
+                }
+            }
+
+            $('#documentsBtn').on('click', async function () {
+                const $tbody = $('#documentsTableBody');
+
+                try {
+                    const res = await fetch('/api/documentuploads/simple');
+                    if (!res.ok) throw new Error(`Failed to load documents: ${res.status}`);
+
+                    const data = await res.json();
+                    $tbody.empty();
+
+                    data.forEach(doc => {
+                        const name = doc.fileName ?? '';
+                        const createdOn = doc.createdOn || '';
+                        const isActive = doc.isActive ? 'Yes' : 'No';
+                        const processed = doc.hasBeenProcessed ? 'Yes' : 'No';
+                        const collectionName = doc.collectionName || '';
+                        const categoryName = doc.categoryName || '';
+                        const summary = doc.summary || '';
+
+                        const $row = $('<tr>')
+                            .addClass('doc-row')
+                            .attr('data-id', doc.id)
+                            .attr('tabindex', 0)
+                            .attr('role', 'button')
+                            .attr('aria-expanded', 'false')
+                            .data('summary', summary);
+
+                        $row.append(`<td class="expand-col"><span class="expand-indicator" aria-hidden="true">+</span></td>`);
+                        $row.append(`<td>${esc(name)}</td>`);
+                        $row.append(`<td>${esc(createdOn)}</td>`);
+                        $row.append(`<td>${esc(collectionName)}</td>`);
+                        $row.append(`<td>${esc(categoryName)}</td>`);
+                        $row.append(`<td>${esc(isActive)}</td>`);
+                        $row.append(`<td>${esc(processed)}</td>`);
+                        $row.append(
+                            `<td class="download-col">
+                                <button class="download-btn btn btn-sm btn-outline-secondary" type="button" title="Download original">
+                                    <i class="fa-solid fa-download"></i>
+                                </button>
+                             </td>`
+                        );
+
+                        $tbody.append($row);
+                    });
+
+                } catch (e) {
+                    console.error(e);
+                    const colspan = getDocumentsTableColspan();
+                    $tbody.html(`<tr><td colspan="${colspan}">Error loading documents.</td></tr>`);
+                }
+            });
+
+            /* Row click expands/collapses (except on download button/icon) */
+            $('#documentsTableBody').on('click', 'tr.doc-row', function (e) {
+                if ($(e.target).closest('.download-btn').length) return; // ignore download clicks
+                toggleDocSummary($(this));
+            });
+
+            /* Keyboard support for row expand/collapse */
+            $('#documentsTableBody').on('keydown', 'tr.doc-row', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleDocSummary($(this));
+                }
+            });
+
+            /* Download button click handler (stop row toggle) */
+            $('#documentsTableBody').on('click', '.download-btn', function (e) {
+                e.stopPropagation();
+                const id = $(this).closest('.doc-row').attr('data-id');
+                if (id) downloadOriginalFile(id);
+            });
+        });</script>
+</body>
+</html>

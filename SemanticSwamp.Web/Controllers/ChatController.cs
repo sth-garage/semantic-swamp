@@ -70,7 +70,7 @@ public class ChatController : ControllerBase
             receiveResult = await inputWebSocket.ReceiveAsync(
                 new ArraySegment<byte>(buffer), CancellationToken.None);
 
-
+            
             // Enable planning
             OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
             {

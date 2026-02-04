@@ -17,5 +17,17 @@ INSERT INTO [dbo].[Collections]
 GO
 
 
+USE [SemanticSwamp]
+GO
+
+INSERT INTO [dbo].[IdTracker]
+           ([LastIdUsed])
+     VALUES
+           (0)
+GO
+
+
+
+
 
 
