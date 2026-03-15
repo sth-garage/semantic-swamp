@@ -1,5 +1,4 @@
-﻿using Elastic.Clients.Elasticsearch.Aggregations;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using SemanticSwamp.DAL.Context;
@@ -34,7 +33,6 @@ namespace SemanticSwamp.AppLogic
 
         public async Task<DocumentUpload> ProcessUpload(FileUploadDTO fileUploadDTO)
         {
-            //await _ragManager.Search("Who are some players on the Falcons?");
             var terms = await GetTerms(fileUploadDTO);
             await _context.SaveChangesAsync();
 
@@ -48,9 +46,6 @@ namespace SemanticSwamp.AppLogic
 
             result = await AddFileMetaData(result, fileUploadDTO);
 
-            //var text = _pdfManager.GetPDFText(result);
-            //var content = await _pdfManager.GetContent(text);
-
             result = await SetCollection(result, fileUploadDTO);
             result = await SetCategory(result, fileUploadDTO);
 
@@ -61,9 +56,6 @@ namespace SemanticSwamp.AppLogic
             await _context.SaveChangesAsync();
 
             var isPDF = result.FileName.ToLowerInvariant().EndsWith("pdf");
-
-            //var summary = await GetTextSummary(result.Base64Data, isPDF);
-            //result.Summary = summary;
 
             string base64ForSummary = result.Base64Data;
             string overrideText = null;
@@ -254,14 +246,7 @@ namespace SemanticSwamp.AppLogic
             var result = "";
             var fileText = "";
 
-            //if (!isPDF)
-            //{
-                fileText = _textManager.GetTextFileContent(base64Data);
-            //}
-            //else
-            //{
-            //    fileText = await _pdfManager.GetContent(base64Data);
-            //}
+            fileText = _textManager.GetTextFileContent(base64Data);
 
             try
             {

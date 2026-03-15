@@ -1,7 +1,4 @@
-﻿using DocumentFormat.OpenXml.Presentation;
-using DocumentFormat.OpenXml.Wordprocessing;
-using Elastic.Clients.Elasticsearch;
-using Microsoft.Extensions.VectorData;
+﻿using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.Qdrant;
@@ -12,12 +9,6 @@ using SemanticSwamp.DAL.Context;
 using SemanticSwamp.DAL.EFModels;
 using SemanticSwamp.Shared.Interfaces;
 using SemanticSwamp.Shared.Models.RAG;
-using SemanticSwamp.Shared.Prompts;
-using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Text;
-using System.Text.RegularExpressions;
 
 #pragma warning disable 
 
@@ -26,22 +17,24 @@ namespace SemanticSwamp.SK.RAG
     public class RAGManager : IRAGManager
     {
         private ITextManager _textManager;
-        //private Kernel _kernel;
         private ITextEmbeddingGenerationService _textEmbeddingGenerationService;
         private string _ragCollectionName = "DocumentUpload";
         private SemanticSwampDBContext _context;
         private IChatCompletionService _chatCompletionService;
+        private QdrantClient _qdrantClient;
 
 
         public RAGManager(ITextManager textManager, 
             ITextEmbeddingGenerationService textEmbeddingGenerationService, 
             SemanticSwampDBContext context, 
-            IChatCompletionService chatCompletionService) 
+            IChatCompletionService chatCompletionService,
+            QdrantClient qdrantClient) 
         { 
             _textManager = textManager;
             _chatCompletionService = chatCompletionService;
             _textEmbeddingGenerationService = textEmbeddingGenerationService;
             _context = context;
+            _qdrantClient = qdrantClient;
         }
 
         public List<string> GetChunks(string value)
@@ -60,12 +53,10 @@ namespace SemanticSwamp.SK.RAG
 
         public async Task UploadToRAG(DocumentUpload documentUpload, string overrideText = null)
         {
-            var vectorStore = new QdrantVectorStore(new QdrantClient("localhost"), ownsClient: true);
-            
             var collection = new QdrantCollection<ulong, DocumentUploadRAGEntry>(
-                new QdrantClient("localhost"),
+                _qdrantClient,
                 _ragCollectionName,
-                ownsClient: true);
+                ownsClient: false);
 
 
             await collection.EnsureCollectionExistsAsync();
@@ -111,12 +102,10 @@ namespace SemanticSwamp.SK.RAG
 
         public async Task<List<DocumentUploadRAGEntry>> Search(string promptOrQuestion)
         {
-            var vectorStore = new QdrantVectorStore(new QdrantClient("localhost"), ownsClient: true);
-
             var collection = new QdrantCollection<ulong, DocumentUploadRAGEntry>(
-                new QdrantClient("localhost"),
+                _qdrantClient,
                 _ragCollectionName,
-                ownsClient: true);
+                ownsClient: false);
 
             await collection.EnsureCollectionExistsAsync();
             ReadOnlyMemory<float> searchEmbedding = await _textEmbeddingGenerationService.GenerateEmbeddingAsync(promptOrQuestion);

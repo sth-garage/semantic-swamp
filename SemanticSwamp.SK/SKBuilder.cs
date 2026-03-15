@@ -31,10 +31,9 @@ namespace SemanticSwamp.SK
                 Timeout = new TimeSpan(2, 0, 0)
             };
 
-            // Create a kernel with Azure OpenAI chat completion
             var skBuilder = Kernel.CreateBuilder().AddOpenAIChatCompletion(
                 modelId: modelId,
-                apiKey: modelId,
+                apiKey: apiKey,
                 endpoint: new Uri(apiUrl),
                 httpClient: client
             ).AddLocalTextEmbeddingGeneration();

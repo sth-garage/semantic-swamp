@@ -1,16 +1,6 @@
 ﻿
-using DocumentFormat.OpenXml.Wordprocessing;
-using Microsoft.Extensions.AI;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
-using Microsoft.SemanticKernel.Connectors.Qdrant;
-using Microsoft.SemanticKernel.Embeddings;
-using Qdrant.Client;
-using SemanticSwamp.DAL.Context;
-using SemanticSwamp.DAL.EFModels;
 using SemanticSwamp.Shared.Interfaces;
-using SemanticSwamp.Shared.Models;
 using SemanticSwamp.Shared.Models.RAG;
 using System.ComponentModel;
 
@@ -31,20 +21,11 @@ namespace SemanticSwamp.SK.Plugins
             _ragManager = ragManager;
         }
 
-        [KernelFunction("search_info_about_movie_odyssey")]
-        [Description("Returns info about the 2026 movie The Odyssey by Christopher Nolan")]
-        public async Task<List<DocumentUploadRAGEntry>> SearchForOdysseyInfo(string question)
+        [KernelFunction("search_uploaded_documents")]
+        [Description("Searches uploaded documents for information relevant to the given question or topic.")]
+        public async Task<List<DocumentUploadRAGEntry>> SearchUploadedDocuments(string question)
         {
-            var result = await _ragManager.Search(question);
-            return result;
-        }
-
-        [KernelFunction("search_info_about_notepadpp_config")]
-        [Description("Returns a list of info about configuring Notepad++")]
-        public async Task<List<DocumentUploadRAGEntry>> SearchForNotepadPP(string question)
-        {
-            var result = await _ragManager.Search(question);
-            return result;
+            return await _ragManager.Search(question);
         }
     }
 }

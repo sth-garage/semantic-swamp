@@ -1,0 +1,148 @@
+﻿@inject EntityService EntityService
+@inject IJSRuntime JS
+
+<!-- Documents Modal -->
+<div class="modal fade fun-modal" id="documentsModal" tabindex="-1" aria-labelledby="documentsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="documentsModalLabel">
+                        <i class="fa-solid fa-folder-open me-2" aria-hidden="true"></i>Document Uploads
+                    </h5>
+                    <div class="modal-subtitle">Click a row to expand its summary. Download originals from the right.</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                @if (_loading)
+                {
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                }
+                else if (!_documents.Any())
+                {
+                    <p class="text-muted text-center py-4">No documents found.</p>
+                }
+                else
+                {
+                    <div class="doc-table-wrap">
+                        <table class="table table-sm mb-0 align-middle">
+                            <thead>
+                                <tr>
+                                    <th class="expand-col"></th>
+                                    <th>Name</th>
+                                    <th>Created On</th>
+                                    <th>Collection</th>
+                                    <th>Category</th>
+                                    <th>Active</th>
+                                    <th>Processed</th>
+                                    <th class="download-col text-end"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var doc in _documents)
+                                {
+                                    var isExpanded = _expandedIds.Contains(doc.Id);
+                                    <tr class="doc-row @(isExpanded ? "expanded selected" : "")"
+                                        role="button" tabindex="0"
+                                        aria-expanded="@isExpanded.ToString().ToLower()"
+                                        @onclick="() => ToggleSummary(doc.Id)"
+                                        @onkeydown="e => HandleRowKey(e, doc.Id)">
+                                        <td class="expand-col">
+                                            <span class="expand-indicator" aria-hidden="true">@(isExpanded ? "-" : "+")</span>
+                                        </td>
+                                        <td>@doc.FileName</td>
+                                        <td>@doc.CreatedOn.ToString("yyyyMMdd_HHmmss")</td>
+                                        <td>@doc.CollectionName</td>
+                                        <td>@doc.CategoryName</td>
+                                        <td>@(doc.IsActive ? "Yes" : "No")</td>
+                                        <td>@(doc.HasBeenProcessed ? "Yes" : "No")</td>
+                                        <td class="download-col">
+                                            <button class="download-btn btn btn-sm btn-outline-secondary" type="button"
+                                                    title="Download original"
+                                                    @onclick:stopPropagation="true"
+                                                    @onclick="() => DownloadFile(doc.Id, doc.FileName)">
+                                                <i class="fa-solid fa-download" aria-hidden="true"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    @if (isExpanded)
+                                    {
+                                        <tr class="summary-row">
+                                            <td colspan="8" class="p-2">
+                                                @if (!string.IsNullOrEmpty(doc.Summary))
+                                                {
+                                                    @doc.Summary
+                                                }
+                                                else
+                                                {
+                                                    <em>No summary available.</em>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<DocRow> _documents = new();
+    private HashSet<int> _expandedIds = new();
+    private bool _loading;
+
+    private record DocRow(int Id, string FileName, DateTime CreatedOn, string CollectionName,
+        string CategoryName, bool IsActive, bool HasBeenProcessed, string? Summary);
+
+    public async Task ShowAsync()
+    {
+        _loading = true;
+        _expandedIds.Clear();
+        await JS.InvokeVoidAsync("showBootstrapModal", "documentsModal");
+        StateHasChanged();
+
+        _documents = EntityService.GetDocuments().Select(d =>
+        {
+            DateTime.TryParseExact(d.CreatedOn, "yyyyMMdd_HHmmss",
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out var dt);
+            return new DocRow(d.Id, d.FileName, dt,
+                d.CollectionName, d.CategoryName,
+                d.IsActive, d.HasBeenProcessed, d.Summary);
+        }).ToList();
+
+        _loading = false;
+        StateHasChanged();
+    }
+
+    private void ToggleSummary(int id)
+    {
+        if (!_expandedIds.Remove(id))
+            _expandedIds.Add(id);
+    }
+
+    private void HandleRowKey(KeyboardEventArgs e, int id)
+    {
+        if (e.Key == "Enter" || e.Key == " ")
+            ToggleSummary(id);
+    }
+
+    private async Task DownloadFile(int id, string fileName)
+    {
+        await JS.InvokeVoidAsync("downloadFile", $"/api/download/{id}", fileName);
+    }
+}

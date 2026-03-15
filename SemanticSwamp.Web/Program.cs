@@ -3,6 +3,7 @@ using Microsoft.KernelMemory.AI;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Embeddings;
+using Qdrant.Client;
 using SemanticSwamp.AppLogic;
 using SemanticSwamp.DAL.Context;
 using SemanticSwamp.Shared.Interfaces;
@@ -31,6 +32,8 @@ webBuilder.Services.AddDbContext<SemanticSwampDBContext>(options =>
     options.UseSqlServer(configValues.ConnectionStrings.ConnectionString_SemanticSwamp,
         sqlServerOptions => sqlServerOptions.CommandTimeout(6000));
 });
+
+webBuilder.Services.AddSingleton<QdrantClient>(sp => new QdrantClient("localhost"));
 
 webBuilder.Services.AddSingleton<IChatCompletionService>(semanticKernelBuildResult.AIServices.ChatCompletionService);
 webBuilder.Services.AddSingleton<Kernel>(semanticKernelBuildResult.AIServices.Kernel);

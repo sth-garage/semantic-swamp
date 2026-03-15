@@ -1,0 +1,392 @@
+﻿@inject EntityService EntityService
+@inject IFileManager FileManager
+@inject IJSRuntime JS
+
+<!-- Upload File Modal -->
+<div class="modal fade fun-modal" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="uploadModalLabel">
+                        <i class="fa-solid fa-cloud-arrow-up me-2" aria-hidden="true"></i>Upload a File
+                    </h5>
+                    <div class="modal-subtitle">Drop a .txt or .pdf file into a collection, categorize it, and tag terms.</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="upload-grid">
+                    <!-- 1) Pick a file -->
+                    <div class="upload-card">
+                        <div class="section-title"><i class="fa-solid fa-file-lines me-2" aria-hidden="true"></i>1) Pick a file</div>
+                        <div class="mb-2 d-flex align-items-center flex-wrap gap-2">
+                            <button type="button" class="btn btn-outline-primary"
+                                    disabled="@_localTestMode"
+                                    @onclick="TriggerFilePicker">Choose File</button>
+                            <span class="file-name">@(_selectedFile?.Name ?? "No file selected")</span>
+                            <InputFile id="uploadFileInput" style="display:none;"
+                                       accept=".txt,.pdf"
+                                       OnChange="OnFileSelected" />
+                        </div>
+                        <div class="small text-muted">Only <strong>.txt</strong> and <strong>.pdf</strong> files are accepted.</div>
+                    </div>
+
+                    <!-- 2) Where should it live? -->
+                    <div class="upload-card">
+                        <div class="section-title"><i class="fa-solid fa-layer-group me-2" aria-hidden="true"></i>2) Where should it live?</div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Collection</label>
+                            <div class="d-flex align-items-center gap-2">
+                                @if (_newCollectionMode)
+                                {
+                                    <input type="text" class="form-control" placeholder="New collection name"
+                                           disabled="@_localTestMode"
+                                           @bind="_newCollectionName" />
+                                }
+                                else
+                                {
+                                    <select class="form-select" disabled="@_localTestMode" @bind="_selectedCollectionId">
+                                        @foreach (var c in _collections)
+                                        {
+                                            <option value="@c.Id">@c.Name</option>
+                                        }
+                                    </select>
+                                }
+                                <button type="button" class="btn btn-outline-secondary"
+                                        disabled="@_localTestMode"
+                                        @onclick="ToggleCollectionMode">
+                                    @(_newCollectionMode ? "Back" : "Add")
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <div class="d-flex align-items-center gap-2">
+                                @if (_newCategoryMode)
+                                {
+                                    <input type="text" class="form-control" placeholder="New category name"
+                                           disabled="@_localTestMode"
+                                           @bind="_newCategoryName" />
+                                }
+                                else
+                                {
+                                    <select class="form-select" disabled="@_localTestMode" @bind="_selectedCategoryId">
+                                        @foreach (var c in _categories)
+                                        {
+                                            <option value="@c.Id">@c.Name</option>
+                                        }
+                                    </select>
+                                }
+                                <button type="button" class="btn btn-outline-secondary"
+                                        disabled="@_localTestMode"
+                                        @onclick="ToggleCategoryMode">
+                                    @(_newCategoryMode ? "Back" : "Add")
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3) Tag terms -->
+                    <div class="upload-card">
+                        <div class="section-title"><i class="fa-solid fa-tags me-2" aria-hidden="true"></i>3) Tag terms</div>
+                        <label class="form-label">Terms</label>
+                        <div class="terms-container">
+                            @foreach (var term in _terms)
+                            {
+                                <label class="badge bg-light border rounded-pill me-2 mb-2 d-inline-flex align-items-center">
+                                    <input type="checkbox" class="me-1 ms-1"
+                                           disabled="@_localTestMode"
+                                           value="@term.Id"
+                                           checked="@_selectedTermIds.Contains(term.Id)"
+                                           @onchange="e => ToggleTerm(term.Id, (bool)(e.Value ?? false))" />
+                                    @term.Name
+                                </label>
+                            }
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mt-2">
+                            <input type="text" class="form-control" placeholder="New term name"
+                                   disabled="@_localTestMode"
+                                   @bind="_newTermInput" />
+                            <button type="button" class="btn btn-outline-primary"
+                                    disabled="@_localTestMode"
+                                    @onclick="AddNewTerm">Add Term</button>
+                        </div>
+                        @if (_newTermNames.Any())
+                        {
+                            <div class="mt-2">
+                                @foreach (var t in _newTermNames)
+                                {
+                                    <span class="badge bg-secondary me-1 mb-1" style="border-radius:999px;padding:8px 10px;">
+                                        @t
+                                        <button type="button" class="btn-close btn-close-white ms-1 p-0"
+                                                style="font-size:0.65em;"
+                                                aria-label="Remove"
+                                                @onclick="() => _newTermNames.Remove(t)"></button>
+                                    </span>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <!-- 4) Local file test -->
+                    <div class="upload-card">
+                        <div class="section-title"><i class="fa-solid fa-vial me-2" aria-hidden="true"></i>Local file test</div>
+                        <div class="mb-2">
+                            <label class="form-label">Local File Type</label>
+                            <select class="form-select custom-local-file-type" @bind="_selectedLocalFile">
+                                <option value="">Select a local file</option>
+                                @foreach (var lf in _localFileTypes)
+                                {
+                                    <option value="@lf">@lf</option>
+                                }
+                            </select>
+                            <div class="small text-muted mt-2">
+                                Choose a local file type to run a quick server-side test upload.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @if (_isUploading)
+                {
+                    <div class="text-center my-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Uploading...</span>
+                        </div>
+                        <div class="small text-muted mt-2">Bubbling it through the swamp&hellip;</div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(_statusMessage))
+                {
+                    <div class="alert @(_isError ? "alert-danger" : "alert-success") mt-2 mb-0">@_statusMessage</div>
+                }
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="Reset">Close</button>
+                <button type="button" class="btn fun-btn @(_localTestMode ? "test-local-file-btn" : "")"
+                        disabled="@_isUploading"
+                        @onclick="DoUpload">
+                    @(_localTestMode ? $"Test Local File {_selectedLocalFile}" : "Upload File")
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Local File Result Modal -->
+<div class="modal fade fun-modal" id="localFileResultModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Local File Result</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="max-height:400px;overflow-y:auto;">
+                <pre class="pre-raw" style="white-space:pre-wrap;">@_localFileResult</pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Collection> _collections = new();
+    private List<Category> _categories = new();
+    private List<Term> _terms = new();
+    private List<string> _localFileTypes = new();
+
+    private int _selectedCollectionId;
+    private int _selectedCategoryId;
+    private HashSet<int> _selectedTermIds = new();
+
+    private bool _newCollectionMode;
+    private bool _newCategoryMode;
+    private string _newCollectionName = "";
+    private string _newCategoryName = "";
+    private string _newTermInput = "";
+    private List<string> _newTermNames = new();
+
+    private string _selectedLocalFile = "";
+    private bool _localTestMode => !string.IsNullOrEmpty(_selectedLocalFile);
+
+    private IBrowserFile? _selectedFile;
+    private bool _isUploading;
+    private string _statusMessage = "";
+    private bool _isError;
+    private string _localFileResult = "";
+
+    public async Task ShowAsync()
+    {
+        await LoadDataAsync();
+        await JS.InvokeVoidAsync("showBootstrapModal", "uploadModal");
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _collections = EntityService.GetCollections();
+        _categories = EntityService.GetCategories();
+        _terms = EntityService.GetTerms();
+        _localFileTypes = EntityService.GetLocalFileTypes();
+
+        if (_collections.Any()) _selectedCollectionId = _collections.First().Id;
+        if (_categories.Any()) _selectedCategoryId = _categories.First().Id;
+
+        StateHasChanged();
+    }
+
+    private async Task TriggerFilePicker()
+    {
+        await JS.InvokeVoidAsync("triggerFileInput", "uploadFileInput");
+    }
+
+    private void OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _selectedFile = e.File;
+        _statusMessage = "";
+    }
+
+    private void ToggleCollectionMode()
+    {
+        _newCollectionMode = !_newCollectionMode;
+        _newCollectionName = "";
+    }
+
+    private void ToggleCategoryMode()
+    {
+        _newCategoryMode = !_newCategoryMode;
+        _newCategoryName = "";
+    }
+
+    private void ToggleTerm(int id, bool isChecked)
+    {
+        if (isChecked) _selectedTermIds.Add(id);
+        else _selectedTermIds.Remove(id);
+    }
+
+    private void AddNewTerm()
+    {
+        var name = _newTermInput.Trim();
+        if (!string.IsNullOrEmpty(name) && !_newTermNames.Contains(name))
+        {
+            _newTermNames.Add(name);
+        }
+        _newTermInput = "";
+    }
+
+    private async Task DoUpload()
+    {
+        _statusMessage = "";
+        _isError = false;
+
+        if (_localTestMode)
+        {
+            await DoLocalFileTest();
+            return;
+        }
+
+        if (_selectedFile == null)
+        {
+            _statusMessage = "Please choose a file first.";
+            _isError = true;
+            return;
+        }
+
+        var ext = Path.GetExtension(_selectedFile.Name).ToLowerInvariant();
+        if (ext != ".txt" && ext != ".pdf")
+        {
+            _statusMessage = "Only .txt and .pdf files are allowed.";
+            _isError = true;
+            return;
+        }
+
+        _isUploading = true;
+        StateHasChanged();
+
+        try
+        {
+            var ms = new MemoryStream();
+            await _selectedFile.OpenReadStream(10_000_000).CopyToAsync(ms);
+            ms.Position = 0;
+
+            var formFile = new Microsoft.AspNetCore.Http.FormFile(ms, 0, ms.Length, "file", _selectedFile.Name)
+            {
+                Headers = new Microsoft.AspNetCore.Http.HeaderDictionary(),
+                ContentType = _selectedFile.ContentType
+            };
+
+            var dto = new FileUploadDTO
+            {
+                file = formFile,
+                collectionId = _newCollectionMode ? null : _selectedCollectionId,
+                categoryId = _newCategoryMode ? null : _selectedCategoryId,
+                newCollectionName = _newCollectionMode ? _newCollectionName : "",
+                newCategoryName = _newCategoryMode ? _newCategoryName : "",
+                termIds = _selectedTermIds.Select(id => id.ToString()).ToList(),
+                newTermNames = _newTermNames.Any()
+                    ? System.Text.Json.JsonSerializer.Serialize(_newTermNames)
+                    : ""
+            };
+
+            await FileManager.ProcessUpload(dto);
+            _statusMessage = $"{_selectedFile.Name} was successfully uploaded.";
+            _isError = false;
+        }
+        catch (Exception ex)
+        {
+            _statusMessage = $"Upload failed: {ex.Message}";
+            _isError = true;
+        }
+        finally
+        {
+            _isUploading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DoLocalFileTest()
+    {
+        _isUploading = true;
+        StateHasChanged();
+
+        try
+        {
+            var fileType = Enum.Parse<SemanticSwamp.Shared.Enums.LocalFileTypes>(_selectedLocalFile);
+            _localFileResult = await FileManager.GetTextFileSummaryFromPath(fileType);
+            await JS.InvokeVoidAsync("hideBootstrapModal", "uploadModal");
+            await JS.InvokeVoidAsync("showBootstrapModal", "localFileResultModal");
+        }
+        catch (Exception ex)
+        {
+            _statusMessage = $"Test failed: {ex.Message}";
+            _isError = true;
+        }
+        finally
+        {
+            _isUploading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void Reset()
+    {
+        _selectedFile = null;
+        _newCollectionMode = false;
+        _newCategoryMode = false;
+        _newCollectionName = "";
+        _newCategoryName = "";
+        _newTermInput = "";
+        _newTermNames.Clear();
+        _selectedTermIds.Clear();
+        _selectedLocalFile = "";
+        _statusMessage = "";
+        _isError = false;
+    }
+}
