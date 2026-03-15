@@ -37,7 +37,7 @@ namespace SemanticSwamp.SK.RAG
         private ITextEmbeddingGenerationService _textEmbeddingGenerationService;
 
         // The name of the Qdrant collection that stores all document chunk vectors.
-        private string _ragCollectionName = "DocumentUpload";
+        private string _ragCollectionName = "DocumentUploadBlazorTest";
         private SemanticSwampDBContext _context;
         private IChatCompletionService _chatCompletionService;
         private QdrantClient _qdrantClient;
@@ -164,11 +164,15 @@ namespace SemanticSwamp.SK.RAG
         /// </summary>
         /// <param name="promptOrQuestion">The user's natural-language question or chat message.</param>
         /// <returns>A ranked list of the most relevant <see cref="DocumentUploadRAGEntry"/> chunks.</returns>
-        public async Task<List<DocumentUploadRAGEntry>> Search(string promptOrQuestion)
+        public async Task<List<DocumentUploadRAGEntry>> Search(string promptOrQuestion, string ragCollectionName = "")
         {
+            var collectionName = String.IsNullOrEmpty(ragCollectionName) 
+                ? _ragCollectionName 
+                : ragCollectionName;
+
             var collection = new QdrantCollection<ulong, DocumentUploadRAGEntry>(
                 _qdrantClient,
-                _ragCollectionName,
+                collectionName,
                 ownsClient: false);
 
             await collection.EnsureCollectionExistsAsync();

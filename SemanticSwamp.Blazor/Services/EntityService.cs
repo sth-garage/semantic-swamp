@@ -1,6 +1,5 @@
 using SemanticSwamp.DAL.Context;
 using SemanticSwamp.DAL.EFModels;
-using SemanticSwamp.Shared;
 using SemanticSwamp.Shared.DTOs;
 
 namespace SemanticSwamp.Blazor.Services;
@@ -36,19 +35,6 @@ public class EntityService
 
     /// <summary>Returns all terms, used to render the term-tagging checkboxes in UploadModal.</summary>
     public List<Term> GetTerms() => _context.Terms.ToList();
-
-    /// <summary>
-    /// Returns the display names of the built-in local test files defined by the LocalFileTypes enum.
-    /// These are pre-existing text files on the server used to test the upload pipeline without
-    /// needing to pick a file from the browser.
-    /// </summary>
-    public List<string> GetLocalFileTypes() =>
-        new()
-        {
-            Enums.LocalFileTypes.Top5Movies.ToString(),
-            Enums.LocalFileTypes.SportsHistory.ToString(),
-            Enums.LocalFileTypes.TheOdyssey.ToString()
-        };
 
     /// <summary>
     /// Returns all document upload records enriched with their collection and category names,

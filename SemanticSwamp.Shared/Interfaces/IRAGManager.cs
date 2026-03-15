@@ -35,6 +35,6 @@ namespace SemanticSwamp.Shared.Interfaces
         /// </summary>
         /// <param name="promptOrQuestion">The user's natural-language question or chat message.</param>
         /// <returns>A list of the most semantically similar <see cref="DocumentUploadRAGEntry"/> chunks.</returns>
-        Task<List<DocumentUploadRAGEntry>> Search(string promptOrQuestion);
+        Task<List<DocumentUploadRAGEntry>> Search(string promptOrQuestion, string collection = "");
     }
 }

@@ -4,7 +4,6 @@ using SemanticSwamp.Shared.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using static SemanticSwamp.Shared.Enums;
 
 namespace SemanticSwamp.Shared.Interfaces
 {
@@ -32,13 +31,5 @@ namespace SemanticSwamp.Shared.Interfaces
         /// <param name="isPDF">Reserved for future per-format prompt adjustments; currently unused in the summary prompt.</param>
         /// <returns>A plain-text AI-generated summary of the document.</returns>
         Task<string> GetTextSummary(string base64Data, bool isPDF = false);
-
-        /// <summary>
-        /// Convenience overload that reads a pre-bundled sample file from the <c>/SampleData/</c> directory
-        /// and returns an AI summary. Useful for smoke-testing the summarisation pipeline during development.
-        /// </summary>
-        /// <param name="localFileTypes">Enum value that maps to a specific sample file on disk.</param>
-        /// <returns>A plain-text AI-generated summary of the chosen sample file.</returns>
-        Task<string> GetTextFileSummaryFromPath(LocalFileTypes localFileTypes);
     }
 }

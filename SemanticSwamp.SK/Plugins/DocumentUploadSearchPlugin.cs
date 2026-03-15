@@ -1,5 +1,4 @@
-﻿
-using Microsoft.SemanticKernel;
+﻿using Microsoft.SemanticKernel;
 using SemanticSwamp.Shared.Interfaces;
 using SemanticSwamp.Shared.Models.RAG;
 using System.ComponentModel;
@@ -27,6 +26,7 @@ namespace SemanticSwamp.SK.Plugins
         /// <param name="ragManager">The RAG manager that handles Qdrant vector search operations.</param>
         public DocumentUploadSearchPlugin(IRAGManager ragManager)
         {
+            _ragManager = ragManager;
         }
 
         /// <summary>
@@ -42,5 +42,6 @@ namespace SemanticSwamp.SK.Plugins
         {
             return await _ragManager.Search(question);
         }
+
     }
 }

@@ -8,8 +8,6 @@ using SemanticSwamp.Shared.Interfaces;
 using SemanticSwamp.Shared.Prompts;
 using System.Collections;
 using System.Text;
-using System.Text.Unicode;
-using static SemanticSwamp.Shared.Enums;
 
 #pragma warning disable SKEXP0001 
 namespace SemanticSwamp.AppLogic
@@ -254,73 +252,6 @@ namespace SemanticSwamp.AppLogic
         #endregion
         
         #region Summary
-
-        /// <summary>
-        /// Developer convenience method that locates a bundled sample file by its <see cref="LocalFileTypes"/>
-        /// enum value and returns an AI-generated summary.
-        /// The sample files live under the <c>/SampleData/</c> directory relative to the solution root.
-        /// This is useful for smoke-testing the summarisation pipeline without uploading a real file.
-        /// </summary>
-        /// <param name="localFileTypes">Identifies which sample file to summarise.</param>
-        /// <returns>AI-generated plain-text summary of the sample file.</returns>
-        public async Task<string> GetTextFileSummaryFromPath(LocalFileTypes localFileTypes)
-        {
-            var result = "";
-            var filePath = new DirectoryInfo(".").Parent.FullName + @"\SampleData\";
-
-            switch (localFileTypes)
-            {
-                case LocalFileTypes.SportsHistory:
-                    filePath += "DirtyBird-Wikipedia.html";
-                    break;
-                case LocalFileTypes.Top5Movies:
-                    filePath += "top5movies.txt";
-                    break;
-                case LocalFileTypes.TheOdyssey:
-                    filePath += "pg1727_TheOdyssey.txt";
-                    break;
-                default:
-                    filePath = "DEFAULT - NOT FOUND";
-                    break;
-            }
-
-            var fileInfo = new FileInfo(filePath);
-
-            result = await this.GetTextFileSummaryFromPath(fileInfo);
-
-
-            return result;
-        }
-
-
-        /// <summary>
-        /// Reads a file from disk, converts its bytes to Base64, and delegates to
-        /// <see cref="GetTextSummary(string, bool)"/> to obtain an AI-generated summary.
-        /// Returns the exception message and stack trace as a string if the file cannot be read,
-        /// so callers receive a visible error without an unhandled exception.
-        /// </summary>
-        /// <param name="fi">A <see cref="FileInfo"/> pointing to the file to summarise.</param>
-        /// <returns>AI-generated plain-text summary, or an error description if the file read fails.</returns>
-        public async Task<string> GetTextFileSummaryFromPath(FileInfo fi)
-        {
-            var result = "";
-            try
-            {
-                    var fileBytes = File.ReadAllBytes(fi.FullName);
-                    var base64Data = Convert.ToBase64String(fileBytes);
-                    var summary = await GetTextSummary(base64Data);
-                    result = summary;
-                
-            }
-            catch (Exception ex)
-            {
-                return ex.Message + " " + ex.StackTrace;
-            }
-
-            return result;
-        }
-
-
 
         /// <summary>
         /// Sends document content to the AI chat completion service and returns a plain-text summary.

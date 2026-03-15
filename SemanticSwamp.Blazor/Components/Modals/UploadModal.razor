@@ -23,7 +23,6 @@
                         <div class="section-title"><i class="fa-solid fa-file-lines me-2" aria-hidden="true"></i>1) Pick a file</div>
                         <div class="mb-2 d-flex align-items-center flex-wrap gap-2">
                             <button type="button" class="btn btn-outline-primary"
-                                    disabled="@_localTestMode"
                                     @onclick="TriggerFilePicker">Choose File</button>
                             <span class="file-name">@(_selectedFile?.Name ?? "No file selected")</span>
                             <InputFile id="uploadFileInput" style="display:none;"
@@ -43,12 +42,11 @@
                                 @if (_newCollectionMode)
                                 {
                                     <input type="text" class="form-control" placeholder="New collection name"
-                                           disabled="@_localTestMode"
                                            @bind="_newCollectionName" />
                                 }
                                 else
                                 {
-                                    <select class="form-select" disabled="@_localTestMode" @bind="_selectedCollectionId">
+                                    <select class="form-select" @bind="_selectedCollectionId">
                                         @foreach (var c in _collections)
                                         {
                                             <option value="@c.Id">@c.Name</option>
@@ -56,7 +54,6 @@
                                     </select>
                                 }
                                 <button type="button" class="btn btn-outline-secondary"
-                                        disabled="@_localTestMode"
                                         @onclick="ToggleCollectionMode">
                                     @(_newCollectionMode ? "Back" : "Add")
                                 </button>
@@ -69,12 +66,11 @@
                                 @if (_newCategoryMode)
                                 {
                                     <input type="text" class="form-control" placeholder="New category name"
-                                           disabled="@_localTestMode"
                                            @bind="_newCategoryName" />
                                 }
                                 else
                                 {
-                                    <select class="form-select" disabled="@_localTestMode" @bind="_selectedCategoryId">
+                                    <select class="form-select" @bind="_selectedCategoryId">
                                         @foreach (var c in _categories)
                                         {
                                             <option value="@c.Id">@c.Name</option>
@@ -82,7 +78,6 @@
                                     </select>
                                 }
                                 <button type="button" class="btn btn-outline-secondary"
-                                        disabled="@_localTestMode"
                                         @onclick="ToggleCategoryMode">
                                     @(_newCategoryMode ? "Back" : "Add")
                                 </button>
@@ -99,7 +94,6 @@
                             {
                                 <label class="badge bg-light border rounded-pill me-2 mb-2 d-inline-flex align-items-center">
                                     <input type="checkbox" class="me-1 ms-1"
-                                           disabled="@_localTestMode"
                                            value="@term.Id"
                                            checked="@_selectedTermIds.Contains(term.Id)"
                                            @onchange="e => ToggleTerm(term.Id, (bool)(e.Value ?? false))" />
@@ -109,10 +103,8 @@
                         </div>
                         <div class="d-flex align-items-center gap-2 mt-2">
                             <input type="text" class="form-control" placeholder="New term name"
-                                   disabled="@_localTestMode"
                                    @bind="_newTermInput" />
                             <button type="button" class="btn btn-outline-primary"
-                                    disabled="@_localTestMode"
                                     @onclick="AddNewTerm">Add Term</button>
                         </div>
                         @if (_newTermNames.Any())
@@ -132,24 +124,7 @@
                         }
                     </div>
 
-                    <!-- 4) Local file test -->
-                    <div class="upload-card">
-                        <div class="section-title"><i class="fa-solid fa-vial me-2" aria-hidden="true"></i>Local file test</div>
-                        <div class="mb-2">
-                            <label class="form-label">Local File Type</label>
-                            <select class="form-select custom-local-file-type" @bind="_selectedLocalFile">
-                                <option value="">Select a local file</option>
-                                @foreach (var lf in _localFileTypes)
-                                {
-                                    <option value="@lf">@lf</option>
-                                }
-                            </select>
-                            <div class="small text-muted mt-2">
-                                Choose a local file type to run a quick server-side test upload.
-                            </div>
-                        </div>
                     </div>
-                </div>
 
                 @if (_isUploading)
                 {
@@ -169,33 +144,16 @@
 
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="Reset">Close</button>
-                <button type="button" class="btn fun-btn @(_localTestMode ? "test-local-file-btn" : "")"
+                <button type="button" class="btn fun-btn"
                         disabled="@_isUploading"
                         @onclick="DoUpload">
-                    @(_localTestMode ? $"Test Local File {_selectedLocalFile}" : "Upload File")
+                    Upload File
                 </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Local File Result Modal -->
-<div class="modal fade fun-modal" id="localFileResultModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Local File Result</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" style="max-height:400px;overflow-y:auto;">
-                <pre class="pre-raw" style="white-space:pre-wrap;">@_localFileResult</pre>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 @code {
     // -------------------------------------------------------------------------
@@ -205,10 +163,6 @@
     private List<Collection> _collections = new();
     private List<Category> _categories = new();
     private List<Term> _terms = new();
-
-    // Human-readable names of the LocalFileTypes enum values, used to populate
-    // the local file test dropdown without hard-coding strings in markup.
-    private List<string> _localFileTypes = new();
 
     // -------------------------------------------------------------------------
     // Currently selected taxonomy IDs (bound to the dropdowns).
@@ -234,30 +188,18 @@
     private List<string> _newTermNames = new();
 
     // -------------------------------------------------------------------------
-    // Local file test mode: selecting a value from the local-file dropdown
-    // flips the upload button to "Test Local File" mode and disables all other
-    // inputs so the test is isolated from real upload state.
-    // -------------------------------------------------------------------------
-    private string _selectedLocalFile = "";
-    private bool _localTestMode => !string.IsNullOrEmpty(_selectedLocalFile);
-
-    // -------------------------------------------------------------------------
     // Upload state fields used to drive the spinner, status banner, and button label.
     // -------------------------------------------------------------------------
 
     // The file chosen via the hidden <InputFile> element.
     private IBrowserFile? _selectedFile;
 
-    // True while the async upload or local test is in progress; shows the spinner.
+    // True while an upload is in progress; shows the spinner and disables the button.
     private bool _isUploading;
 
     // Displayed in the status banner below the form.
     private string _statusMessage = "";
     private bool _isError;
-
-    // Holds the AI-generated summary returned by DoLocalFileTest, shown in a
-    // secondary result modal after the upload modal is hidden.
-    private string _localFileResult = "";
 
     /// <summary>
     /// Called by the parent component (Home.razor) when the user clicks the Upload button.
@@ -280,7 +222,6 @@
         _collections = EntityService.GetCollections();
         _categories = EntityService.GetCategories();
         _terms = EntityService.GetTerms();
-        _localFileTypes = EntityService.GetLocalFileTypes();
 
         if (_collections.Any()) _selectedCollectionId = _collections.First().Id;
         if (_categories.Any()) _selectedCategoryId = _categories.First().Id;
@@ -355,8 +296,7 @@
 
     /// <summary>
     /// Primary action handler for the modal's submit button.
-    /// Routes to <see cref="DoLocalFileTest"/> if a local file type is selected,
-    /// otherwise runs the full upload pipeline:
+    /// Runs the full upload pipeline:
     /// <list type="number">
     ///   <item>Validates file selection and extension (.txt or .pdf only).</item>
     ///   <item>
@@ -372,12 +312,6 @@
     {
         _statusMessage = "";
         _isError = false;
-
-        if (_localTestMode)
-        {
-            await DoLocalFileTest();
-            return;
-        }
 
         if (_selectedFile == null)
         {
@@ -444,37 +378,6 @@
     }
 
     /// <summary>
-    /// Developer smoke-test that runs the AI summarisation pipeline against a bundled sample file
-    /// (one of the <see cref="SemanticSwamp.Shared.Enums.LocalFileTypes"/> values).
-    /// On success, closes the upload modal and opens the result modal to display the AI summary.
-    /// This lets developers verify that the AI connection and summarisation prompt are working
-    /// without needing to upload a real file.
-    /// </summary>
-    private async Task DoLocalFileTest()
-    {
-        _isUploading = true;
-        StateHasChanged();
-
-        try
-        {
-            var fileType = Enum.Parse<SemanticSwamp.Shared.Enums.LocalFileTypes>(_selectedLocalFile);
-            _localFileResult = await FileManager.GetTextFileSummaryFromPath(fileType);
-            await JS.InvokeVoidAsync("hideBootstrapModal", "uploadModal");
-            await JS.InvokeVoidAsync("showBootstrapModal", "localFileResultModal");
-        }
-        catch (Exception ex)
-        {
-            _statusMessage = $"Test failed: {ex.Message}";
-            _isError = true;
-        }
-        finally
-        {
-            _isUploading = false;
-            StateHasChanged();
-        }
-    }
-
-    /// <summary>
     /// Resets all form state to its initial values when the modal is closed.
     /// Called by the Close button's <c>@onclick</c> handler so the form is always
     /// blank the next time the modal is opened (rather than showing stale previous-upload state).
@@ -489,7 +392,6 @@
         _newTermInput = "";
         _newTermNames.Clear();
         _selectedTermIds.Clear();
-        _selectedLocalFile = "";
         _statusMessage = "";
         _isError = false;
     }
