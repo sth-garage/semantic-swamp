@@ -15,16 +15,43 @@ using ChatHistory = Microsoft.SemanticKernel.ChatCompletion.ChatHistory;
 
 namespace SemanticSwamp.AppLogic
 {
+    /// <summary>
+    /// Extracts text from PDF documents and uses AI to reconstruct the logical reading order
+    /// of content that may appear out of sequence due to multi-column layouts, images, or
+    /// non-linear text streams within the PDF's content structure.
+    /// <para>
+    /// Extraction flow:
+    /// <list type="number">
+    ///   <item>Decode the Base64 PDF to raw bytes.</item>
+    ///   <item>Open with PdfPig and iterate every page, capturing text via <c>ContentOrderTextExtractor</c>.</item>
+    ///   <item>Send each page's text to the AI with a prompt explaining multi-column interleaving,
+    ///         instructing it to reconstruct the correct reading order without omitting any content.</item>
+    ///   <item>Return the AI-corrected full-text string for use in summarisation and RAG indexing.</item>
+    /// </list>
+    /// </para>
+    /// </summary>
     public class PDFManager : IPDFManager
     {
 
         private IChatCompletionService _chatCompletionService;
 
+        /// <summary>
+        /// Initialises <see cref="PDFManager"/> with the Semantic Kernel chat completion service
+        /// used to correct column-interleaved text extracted from each PDF page.
+        /// </summary>
+        /// <param name="chatCompletionService">The AI chat completion service registered via Semantic Kernel.</param>
         public PDFManager(IChatCompletionService chatCompletionService)
         {
             _chatCompletionService = chatCompletionService;
         }
 
+        /// <summary>
+        /// End-to-end convenience method: decodes a Base64 PDF, extracts per-page text with PdfPig,
+        /// then sends those pages to the AI for column-order correction.
+        /// This is the primary entry point called by <c>UploadManager</c> during PDF processing.
+        /// </summary>
+        /// <param name="base64Data">Base64-encoded PDF file content, as stored in <c>DocumentUpload.Base64Data</c>.</param>
+        /// <returns>A single AI-corrected plain-text string representing the entire PDF's content.</returns>
         public async Task<string> GetContent(string base64Data)
         {
             var text = GetPDFText(base64Data);
@@ -32,6 +59,18 @@ namespace SemanticSwamp.AppLogic
             return result;
         }
 
+        /// <summary>
+        /// Sends pre-extracted per-page text to the AI for logical reading-order reconstruction.
+        /// <para>
+        /// PDF text extractors output characters in the order they appear in the content stream,
+        /// which for multi-column documents means columns may be interleaved (all of column 1,
+        /// then all of column 2, etc.). The AI prompt explains this problem with a concrete example
+        /// and instructs the model to reconstruct the correct reading order while preserving ALL content
+        /// (this is explicitly NOT a summarisation step).
+        /// </para>
+        /// </summary>
+        /// <param name="pdfTexts">List of per-page text objects produced by <see cref="GetPDFText(byte[])"/>.</param>
+        /// <returns>A single string with the AI-corrected full text of the document.</returns>
         public async Task<string> GetContent(List<PDFText> pdfTexts)
         {
             var result = "";
@@ -81,11 +120,23 @@ namespace SemanticSwamp.AppLogic
             return result;
         }
 
+        /// <summary>
+        /// Convenience overload that extracts per-page text from the PDF stored in a
+        /// <see cref="DocumentUpload"/> entity's <c>Base64Data</c> field.
+        /// Delegates to the Base64 string overload.
+        /// </summary>
+        /// <param name="documentUpload">The document entity whose <c>Base64Data</c> contains the raw PDF bytes.</param>
+        /// <returns>A list of <see cref="PDFText"/> objects, one per page.</returns>
         public List<PDFText> GetPDFText(DocumentUpload documentUpload)
         {
             return GetPDFText(documentUpload.Base64Data);
         }
 
+        /// <summary>
+        /// Decodes a Base64 PDF string to raw bytes and delegates to the byte-array overload.
+        /// </summary>
+        /// <param name="base64Data">Base64-encoded PDF file content.</param>
+        /// <returns>A list of <see cref="PDFText"/> objects, one per page.</returns>
         public List<PDFText> GetPDFText(string base64Data)
         {
             var bytes = Convert.FromBase64String(base64Data);
@@ -93,6 +144,14 @@ namespace SemanticSwamp.AppLogic
             return GetPDFText(bytes);
         }
 
+        /// <summary>
+        /// Core extraction method: opens the raw PDF bytes with PdfPig, iterates every page,
+        /// and collects text using <c>ContentOrderTextExtractor.GetText</c> (which attempts to
+        /// preserve reading order). Also captures word-based and raw stream text for reference
+        /// (though only the <c>ContentOrderTextExtractor</c> result is stored in the returned list).
+        /// </summary>
+        /// <param name="bytes">Raw PDF file bytes.</param>
+        /// <returns>A list of <see cref="PDFText"/> objects with 1-based page numbers and extracted text.</returns>
         public List<PDFText> GetPDFText(byte[] bytes)
         {
             var result = new List<PDFText>();
