@@ -32,6 +32,28 @@
         </div>
     </header>
 
+    <nav class="app-navbar" aria-label="Main actions">
+        <div class="navbar-left">
+            <button class="btn fun-btn" type="button"
+                    disabled="@(!ChatSvc.IsReady || ChatSvc.IsWaiting)"
+                    @onclick="ShowUploadModal">
+                <i class="fa-solid fa-cloud-arrow-up me-2" aria-hidden="true"></i>Upload
+            </button>
+            <button class="btn fun-btn" type="button"
+                    disabled="@(!ChatSvc.IsReady)"
+                    @onclick="ShowDocumentsModal">
+                <i class="fa-solid fa-folder-open me-2" aria-hidden="true"></i>Documents
+            </button>
+            <div class="navbar-divider" aria-hidden="true"></div>
+            @foreach (var p in _prompts)
+            {
+                <button type="button" class="prompt-chip"
+                        disabled="@(!ChatSvc.IsReady || ChatSvc.IsWaiting)"
+                        @onclick="() => FillPrompt(p.Text)">@p.Label</button>
+            }
+        </div>
+    </nav>
+
     <div class="app-main">
         <section class="chat-card @(showSplash ? "splash" : "")" id="chatPane" role="main">
             <div class="chat-card-header">
@@ -45,18 +67,6 @@
                         <div class="assistant-name">Semantigator</div>
                         <div class="assistant-state">@ChatSvc.Status</div>
                     </div>
-                </div>
-                <div class="chat-header-actions">
-                    <button class="btn fun-btn" type="button"
-                            disabled="@(!ChatSvc.IsReady || ChatSvc.IsWaiting)"
-                            @onclick="ShowUploadModal">
-                        <i class="fa-solid fa-cloud-arrow-up me-2" aria-hidden="true"></i>Upload
-                    </button>
-                    <button class="btn fun-btn" type="button"
-                            disabled="@(!ChatSvc.IsReady)"
-                            @onclick="ShowDocumentsModal">
-                        <i class="fa-solid fa-folder-open me-2" aria-hidden="true"></i>Documents
-                    </button>
                 </div>
             </div>
 
@@ -144,27 +154,6 @@
                 </div>
             </div>
         </section>
-
-        <aside class="swamp-guide" aria-label="Swamp guide">
-            <div class="guide-card">
-                <div class="guide-title"><i class="fa-solid fa-compass me-2" aria-hidden="true"></i>Swamp Guide</div>
-                <p class="guide-text">Need a prompt? Click one to fill the chat box.</p>
-                <div class="prompt-grid">
-                    @foreach (var p in _prompts)
-                    {
-                        <button type="button" class="prompt-chip"
-                                disabled="@(!ChatSvc.IsReady || ChatSvc.IsWaiting)"
-                                @onclick="() => FillPrompt(p.Text)">@p.Label</button>
-                    }
-                </div>
-                <div class="guide-divider"></div>
-                <div class="mini-tips">
-                    <div class="mini-tip"><span class="mini-kbd">Enter</span> send</div>
-                    <div class="mini-tip"><span class="mini-kbd">&uarr;</span>/<span class="mini-kbd">&darr;</span> history</div>
-                    <div class="mini-tip"><span class="mini-kbd">Click</span> latency badge for metadata</div>
-                </div>
-            </div>
-        </aside>
     </div>
 </div>
 
@@ -227,10 +216,9 @@
         new("Study guide",              "Turn this into a short study guide with headings."),
     ];
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         ChatSvc.OnStateChanged += OnChatStateChanged;
-        await ChatSvc.IntroduceAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -241,6 +229,8 @@
             isDarkTheme = stored == "midnight";
             await JS.InvokeVoidAsync("applyTheme", isDarkTheme ? "midnight" : "dawn");
             StateHasChanged();
+
+            _ = ChatSvc.IntroduceAsync();
         }
 
         if (_scrollToBottom)

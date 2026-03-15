@@ -14,6 +14,22 @@ using static SemanticSwamp.Shared.Enums;
 #pragma warning disable SKEXP0001 
 namespace SemanticSwamp.AppLogic
 {
+    /// <summary>
+    /// Orchestrates the complete document upload pipeline from raw file bytes through to
+    /// a fully indexed, searchable vector entry in the Qdrant RAG store.
+    /// <para>
+    /// The high-level flow handled by <see cref="ProcessUpload"/> is:
+    /// <list type="number">
+    ///   <item>Parse and create any new <c>Term</c> entities from the DTO.</item>
+    ///   <item>Extract file metadata (filename, Base64 content).</item>
+    ///   <item>Resolve or create the target <c>Collection</c> and <c>Category</c>.</item>
+    ///   <item>Persist the <see cref="DocumentUpload"/> record and its term links to SQL Server.</item>
+    ///   <item>If the file is a PDF, extract its text via <c>PDFManager</c>.</item>
+    ///   <item>Generate an AI summary via <c>IChatCompletionService</c>.</item>
+    ///   <item>Upload chunked text embeddings to the Qdrant vector store via <c>RAGManager</c>.</item>
+    /// </list>
+    /// </para>
+    /// </summary>
     public class UploadManager : IFileManager
     {
         private SemanticSwampDBContext _context;
@@ -22,6 +38,14 @@ namespace SemanticSwamp.AppLogic
         private IRAGManager _ragManager;
         private IPDFManager _pdfManager;
 
+        /// <summary>
+        /// Initialises <see cref="UploadManager"/> with all required services injected by the DI container.
+        /// </summary>
+        /// <param name="context">EF Core database context for reading/writing SQL Server entities.</param>
+        /// <param name="chatCompletionService">Semantic Kernel chat completion service used for AI summarisation.</param>
+        /// <param name="textManager">Utility for Base64 encoding/decoding and text chunking.</param>
+        /// <param name="ragManager">Manages chunked vector upserts into the Qdrant collection.</param>
+        /// <param name="pdfManager">Extracts and reconstructs text from PDF files using PdfPig + AI.</param>
         public UploadManager(SemanticSwampDBContext context, IChatCompletionService chatCompletionService, ITextManager textManager, IRAGManager ragManager, IPDFManager pdfManager)
         {
             _context = context;
@@ -31,6 +55,13 @@ namespace SemanticSwamp.AppLogic
             _pdfManager = pdfManager;
         }
 
+        /// <summary>
+        /// End-to-end upload pipeline entry point.
+        /// Saves the document record, links taxonomy entities (collection, category, terms),
+        /// generates an AI summary, and indexes the document in the Qdrant RAG vector store.
+        /// </summary>
+        /// <param name="fileUploadDTO">DTO containing the uploaded file and all user-chosen metadata.</param>
+        /// <returns>The fully populated and persisted <see cref="DocumentUpload"/> entity.</returns>
         public async Task<DocumentUpload> ProcessUpload(FileUploadDTO fileUploadDTO)
         {
             var terms = await GetTerms(fileUploadDTO);
@@ -80,6 +111,11 @@ namespace SemanticSwamp.AppLogic
         }
 
         #region Process Helpers
+        /// <summary>
+        /// Reads the uploaded file's bytes via <c>IFormFile</c> and stores them as a Base64 string
+        /// on the entity, along with the original filename. Using Base64 allows arbitrary binary
+        /// files to be stored safely in a SQL Server text column.
+        /// </summary>
         private async Task<DocumentUpload> AddFileMetaData(DocumentUpload documentUpload, FileUploadDTO fileUploadDTO)
         {
             var result = documentUpload;
@@ -90,6 +126,11 @@ namespace SemanticSwamp.AppLogic
             return result;
         }
 
+        /// <summary>
+        /// Creates <see cref="DocumentUploadTerm"/> join-table rows linking each resolved <see cref="Term"/>
+        /// to the saved <see cref="DocumentUpload"/>. This many-to-many relationship allows documents
+        /// to be filtered by tag/term in the RAG search pipeline.
+        /// </summary>
         private async Task LinkTermsToDocumentUpload(List<Term> terms, DocumentUpload documentUpload)
         {
             foreach (var term in terms)
@@ -108,6 +149,12 @@ namespace SemanticSwamp.AppLogic
 
         #region Entities
 
+        /// <summary>
+        /// Resolves the <see cref="Collection"/> for this upload.
+        /// If the DTO supplies a new collection name a fresh entity is created (EF will INSERT it);
+        /// otherwise the existing collection is looked up by its ID.
+        /// Collections group documents by broad topic area and are used to scope RAG searches.
+        /// </summary>
         private async Task<DocumentUpload> SetCollection(DocumentUpload documentUpload, FileUploadDTO fileUploadDTO)
         {
             var result = documentUpload;
@@ -127,6 +174,12 @@ namespace SemanticSwamp.AppLogic
 
         }
 
+        /// <summary>
+        /// Resolves the <see cref="Category"/> for this upload.
+        /// Mirrors the pattern in <see cref="SetCollection"/>: creates a new entity if a new name
+        /// is provided, otherwise fetches the existing one by ID.
+        /// Categories provide a finer-grained classification within a collection.
+        /// </summary>
         private async Task<DocumentUpload> SetCategory(DocumentUpload documentUpload, FileUploadDTO fileUploadDTO)
         {
             var result = documentUpload;
@@ -146,6 +199,18 @@ namespace SemanticSwamp.AppLogic
         }
 
 
+        /// <summary>
+        /// Resolves the list of <see cref="Term"/> entities to associate with this upload.
+        /// Handles two sources:
+        /// <list type="bullet">
+        ///   <item>Existing terms: IDs are provided in <c>fileUploadDTO.termIds</c>.
+        ///         Note: the ID is incremented by 1 before lookup (<c>termIdValue++</c>) to
+        ///         account for the zero-based index offset sent from the UI.</item>
+        ///   <item>New terms: a JSON-array string in <c>fileUploadDTO.newTermNames</c> is parsed,
+        ///         each name is trimmed of brackets/quotes, and a new <see cref="Term"/> entity
+        ///         is inserted into the database immediately.</item>
+        /// </list>
+        /// </summary>
         private async Task<List<Term>> GetTerms(FileUploadDTO fileUploadDTO)
         {
             List<Term> termsList = new List<Term>();
@@ -190,6 +255,14 @@ namespace SemanticSwamp.AppLogic
         
         #region Summary
 
+        /// <summary>
+        /// Developer convenience method that locates a bundled sample file by its <see cref="LocalFileTypes"/>
+        /// enum value and returns an AI-generated summary.
+        /// The sample files live under the <c>/SampleData/</c> directory relative to the solution root.
+        /// This is useful for smoke-testing the summarisation pipeline without uploading a real file.
+        /// </summary>
+        /// <param name="localFileTypes">Identifies which sample file to summarise.</param>
+        /// <returns>AI-generated plain-text summary of the sample file.</returns>
         public async Task<string> GetTextFileSummaryFromPath(LocalFileTypes localFileTypes)
         {
             var result = "";
@@ -220,6 +293,14 @@ namespace SemanticSwamp.AppLogic
         }
 
 
+        /// <summary>
+        /// Reads a file from disk, converts its bytes to Base64, and delegates to
+        /// <see cref="GetTextSummary(string, bool)"/> to obtain an AI-generated summary.
+        /// Returns the exception message and stack trace as a string if the file cannot be read,
+        /// so callers receive a visible error without an unhandled exception.
+        /// </summary>
+        /// <param name="fi">A <see cref="FileInfo"/> pointing to the file to summarise.</param>
+        /// <returns>AI-generated plain-text summary, or an error description if the file read fails.</returns>
         public async Task<string> GetTextFileSummaryFromPath(FileInfo fi)
         {
             var result = "";
@@ -241,6 +322,18 @@ namespace SemanticSwamp.AppLogic
 
 
 
+        /// <summary>
+        /// Sends document content to the AI chat completion service and returns a plain-text summary.
+        /// <para>
+        /// The text is first decoded from Base64, then split into 10,000-character chunks via
+        /// <see cref="ITextManager.GetChunks"/>. Each chunk is added as a separate user message in the
+        /// <see cref="ChatHistory"/> so that large documents do not overflow the model's context window.
+        /// If the text is short enough to fit in one chunk, it is sent as a single message.
+        /// </para>
+        /// </summary>
+        /// <param name="base64Data">Base64-encoded document text (PDF-extracted text is re-encoded before being passed here).</param>
+        /// <param name="isPDF">Currently unused; reserved for potential future prompt variation for PDF content.</param>
+        /// <returns>The AI-generated summary string, or an empty string if an exception occurs.</returns>
         public async Task<string> GetTextSummary(string base64Data, bool isPDF = false)
         {
             var result = "";

@@ -197,13 +197,34 @@ html[data-theme="midnight"] .ghost-icon-btn { background: rgba(8,16,18,0.55); }
 
 .app-main {
     flex: 1 1 auto; min-height: 0;
-    display: grid; grid-template-columns: 1fr 330px; gap: 14px;
+    display: flex; flex-direction: column;
 }
 
 @media (max-width: 992px) {
-    .app-main { grid-template-columns: 1fr; }
-    .swamp-guide { display: none; }
     .brand-subtitle { display: none; }
+}
+
+.app-navbar {
+    border-radius: 22px; border: 1px solid transparent;
+    background: linear-gradient(var(--card), var(--card)) padding-box, var(--frame-grad) border-box;
+    box-shadow: var(--shadow); backdrop-filter: blur(14px);
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 10px;
+    overflow-x: auto; overflow-y: hidden;
+    flex: 0 0 auto;
+    scrollbar-width: none;
+}
+
+.app-navbar::-webkit-scrollbar { display: none; }
+
+.navbar-left {
+    display: flex; align-items: center; gap: 10px;
+    flex-wrap: nowrap; min-width: 0;
+}
+
+.navbar-divider {
+    width: 1px; height: 28px; background: var(--border);
+    flex: 0 0 auto; margin: 0 2px;
 }
 
 .chat-card {
@@ -254,8 +275,6 @@ html[data-theme="midnight"] .chat-card.splash::after {
     font-size: 0.92rem; font-weight: 700; color: var(--ink-soft);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 48vw;
 }
-
-.chat-header-actions { display: flex; gap: 10px; align-items: center; flex: 0 0 auto; }
 
 .btn.fun-btn {
     border-radius: 999px; border: 1px solid rgba(255,255,255,0.32);
@@ -551,7 +570,8 @@ html[data-theme="midnight"] .hint-pill { background: rgba(8,16,18,0.6); border-c
 
 .prompt-chip {
     border: 1px solid var(--border); background: rgba(255,255,255,0.58); border-radius: 18px;
-    padding: 10px 12px; font-weight: 900; color: var(--ink); text-align: left;
+    padding: 8px 14px; font-weight: 900; color: var(--ink); white-space: nowrap;
+    flex: 0 0 auto;
     transition: transform 0.15s ease, filter 0.15s ease;
 }
 

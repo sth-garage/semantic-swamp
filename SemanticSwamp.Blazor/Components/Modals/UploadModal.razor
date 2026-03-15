@@ -198,37 +198,83 @@
 </div>
 
 @code {
+    // -------------------------------------------------------------------------
+    // Entity lists loaded from the database on modal open.
+    // These populate the collection/category dropdowns and terms checkboxes.
+    // -------------------------------------------------------------------------
     private List<Collection> _collections = new();
     private List<Category> _categories = new();
     private List<Term> _terms = new();
+
+    // Human-readable names of the LocalFileTypes enum values, used to populate
+    // the local file test dropdown without hard-coding strings in markup.
     private List<string> _localFileTypes = new();
 
+    // -------------------------------------------------------------------------
+    // Currently selected taxonomy IDs (bound to the dropdowns).
+    // Defaults to the first item in each list after LoadDataAsync.
+    // -------------------------------------------------------------------------
     private int _selectedCollectionId;
     private int _selectedCategoryId;
+
+    // Uses a HashSet so toggling the same term twice safely de-duplicates.
     private HashSet<int> _selectedTermIds = new();
 
+    // -------------------------------------------------------------------------
+    // "Add new" toggle modes for collection and category.
+    // When true, a text input replaces the dropdown so the user can type a new name.
+    // -------------------------------------------------------------------------
     private bool _newCollectionMode;
     private bool _newCategoryMode;
     private string _newCollectionName = "";
     private string _newCategoryName = "";
+
+    // Buffer for the new-term text field; _newTermNames holds the staged list.
     private string _newTermInput = "";
     private List<string> _newTermNames = new();
 
+    // -------------------------------------------------------------------------
+    // Local file test mode: selecting a value from the local-file dropdown
+    // flips the upload button to "Test Local File" mode and disables all other
+    // inputs so the test is isolated from real upload state.
+    // -------------------------------------------------------------------------
     private string _selectedLocalFile = "";
     private bool _localTestMode => !string.IsNullOrEmpty(_selectedLocalFile);
 
+    // -------------------------------------------------------------------------
+    // Upload state fields used to drive the spinner, status banner, and button label.
+    // -------------------------------------------------------------------------
+
+    // The file chosen via the hidden <InputFile> element.
     private IBrowserFile? _selectedFile;
+
+    // True while the async upload or local test is in progress; shows the spinner.
     private bool _isUploading;
+
+    // Displayed in the status banner below the form.
     private string _statusMessage = "";
     private bool _isError;
+
+    // Holds the AI-generated summary returned by DoLocalFileTest, shown in a
+    // secondary result modal after the upload modal is hidden.
     private string _localFileResult = "";
 
+    /// <summary>
+    /// Called by the parent component (Home.razor) when the user clicks the Upload button.
+    /// Loads fresh entity data from the database and then programmatically shows the
+    /// Bootstrap modal via JS interop so the dropdowns are always up-to-date.
+    /// </summary>
     public async Task ShowAsync()
     {
         await LoadDataAsync();
         await JS.InvokeVoidAsync("showBootstrapModal", "uploadModal");
     }
 
+    /// <summary>
+    /// Fetches collections, categories, terms, and local file type names from
+    /// <see cref="EntityService"/> and pre-selects the first item in each list.
+    /// Calls <c>StateHasChanged</c> to force a re-render once data is ready.
+    /// </summary>
     private async Task LoadDataAsync()
     {
         _collections = EntityService.GetCollections();
@@ -242,35 +288,61 @@
         StateHasChanged();
     }
 
+    /// <summary>
+    /// Programmatically clicks the hidden <c>&lt;InputFile&gt;</c> element via JS interop.
+    /// This lets the visible "Choose File" button act as the file picker trigger while
+    /// keeping the native file input hidden for styling flexibility.
+    /// </summary>
     private async Task TriggerFilePicker()
     {
         await JS.InvokeVoidAsync("triggerFileInput", "uploadFileInput");
     }
 
+    /// <summary>
+    /// Fired by Blazor's <c>InputFile.OnChange</c> event when the user selects a file.
+    /// Stores the reference to the <see cref="IBrowserFile"/> for use during upload.
+    /// </summary>
     private void OnFileSelected(InputFileChangeEventArgs e)
     {
         _selectedFile = e.File;
         _statusMessage = "";
     }
 
+    /// <summary>
+    /// Switches the collection field between "pick existing" (dropdown) and "create new" (text input).
+    /// Clears the new-name buffer when toggling back to the dropdown.
+    /// </summary>
     private void ToggleCollectionMode()
     {
         _newCollectionMode = !_newCollectionMode;
         _newCollectionName = "";
     }
 
+    /// <summary>
+    /// Switches the category field between "pick existing" (dropdown) and "create new" (text input).
+    /// Clears the new-name buffer when toggling back to the dropdown.
+    /// </summary>
     private void ToggleCategoryMode()
     {
         _newCategoryMode = !_newCategoryMode;
         _newCategoryName = "";
     }
 
+    /// <summary>
+    /// Adds or removes a term ID from the selected-terms set based on the checkbox state.
+    /// The HashSet ensures no duplicates even if the event fires multiple times.
+    /// </summary>
     private void ToggleTerm(int id, bool isChecked)
     {
         if (isChecked) _selectedTermIds.Add(id);
         else _selectedTermIds.Remove(id);
     }
 
+    /// <summary>
+    /// Stages a new term name into <c>_newTermNames</c> without saving it to the database yet.
+    /// The term will be persisted by <c>UploadManager.GetTerms</c> when the upload is submitted.
+    /// Duplicates and blank names are silently ignored.
+    /// </summary>
     private void AddNewTerm()
     {
         var name = _newTermInput.Trim();
@@ -281,6 +353,21 @@
         _newTermInput = "";
     }
 
+    /// <summary>
+    /// Primary action handler for the modal's submit button.
+    /// Routes to <see cref="DoLocalFileTest"/> if a local file type is selected,
+    /// otherwise runs the full upload pipeline:
+    /// <list type="number">
+    ///   <item>Validates file selection and extension (.txt or .pdf only).</item>
+    ///   <item>
+    ///     Reads the <see cref="IBrowserFile"/> (max 10 MB) into a <see cref="MemoryStream"/>
+    ///     and wraps it in an <see cref="Microsoft.AspNetCore.Http.FormFile"/> adapter so it can
+    ///     be passed to <see cref="IFileManager.ProcessUpload"/>, which expects an <c>IFormFile</c>.
+    ///   </item>
+    ///   <item>Builds a <see cref="FileUploadDTO"/> with all user selections.</item>
+    ///   <item>Calls <see cref="IFileManager.ProcessUpload"/> which handles DB persistence, AI summary, and RAG indexing.</item>
+    /// </list>
+    /// </summary>
     private async Task DoUpload()
     {
         _statusMessage = "";
@@ -312,16 +399,21 @@
 
         try
         {
+            // Blazor's IBrowserFile is browser-side; copy it into a server-side MemoryStream
+            // so the downstream AppLogic pipeline (which expects IFormFile) can read it.
             var ms = new MemoryStream();
             await _selectedFile.OpenReadStream(10_000_000).CopyToAsync(ms);
             ms.Position = 0;
 
+            // Wrap the MemoryStream in FormFile to satisfy IFormFile without an actual HTTP request.
             var formFile = new Microsoft.AspNetCore.Http.FormFile(ms, 0, ms.Length, "file", _selectedFile.Name)
             {
                 Headers = new Microsoft.AspNetCore.Http.HeaderDictionary(),
                 ContentType = _selectedFile.ContentType
             };
 
+            // Serialize new term names as a JSON array string; UploadManager.GetTerms
+            // parses this format to create new Term entities in the database.
             var dto = new FileUploadDTO
             {
                 file = formFile,
@@ -351,6 +443,13 @@
         }
     }
 
+    /// <summary>
+    /// Developer smoke-test that runs the AI summarisation pipeline against a bundled sample file
+    /// (one of the <see cref="SemanticSwamp.Shared.Enums.LocalFileTypes"/> values).
+    /// On success, closes the upload modal and opens the result modal to display the AI summary.
+    /// This lets developers verify that the AI connection and summarisation prompt are working
+    /// without needing to upload a real file.
+    /// </summary>
     private async Task DoLocalFileTest()
     {
         _isUploading = true;
@@ -375,6 +474,11 @@
         }
     }
 
+    /// <summary>
+    /// Resets all form state to its initial values when the modal is closed.
+    /// Called by the Close button's <c>@onclick</c> handler so the form is always
+    /// blank the next time the modal is opened (rather than showing stale previous-upload state).
+    /// </summary>
     private void Reset()
     {
         _selectedFile = null;
