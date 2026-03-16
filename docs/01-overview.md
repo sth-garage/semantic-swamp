@@ -64,3 +64,11 @@ Each project is described in detail in the remaining docs files:
 - [`06-semantic-kernel.md`](06-semantic-kernel.md) — Semantic Kernel configuration and plugins
 - [`07-blazor-ui.md`](07-blazor-ui.md) — Blazor UI structure, services, and state management
 - [`08-setup-and-running.md`](08-setup-and-running.md) — Local development setup instructions
+
+Additional reference documents:
+
+- [`09-blazor-primer.md`](09-blazor-primer.md) — General Blazor Server primer (circuits, rendering, DI, JS interop)
+- [`10-mcp-server.md`](10-mcp-server.md) — MCP server (`SemanticKernel.MCP`) design and tools
+- [`11-mcp-agent-client.md`](11-mcp-agent-client.md) — MCP-backed Blazor client (`SemanticSwamp.MCPBlazor`)
+- [`12-deployment-mcp.md`](12-deployment-mcp.md) — Deployment considerations for MCP server/client
+- [`13-mcp-agent-server-interaction.md`](13-mcp-agent-server-interaction.md) — In-depth MCP client ↔ server interaction guide

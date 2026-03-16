@@ -1,0 +1,312 @@
+@inject EntityService EntityService
+@inject IFileManager FileManager
+@inject IJSRuntime JS
+
+<!-- Upload File Modal -->
+<div class="modal fade fun-modal" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="uploadModalLabel">
+                        <i class="fa-solid fa-cloud-arrow-up me-2" aria-hidden="true"></i>Upload a File
+                    </h5>
+                    <div class="modal-subtitle">Drop a .txt or .pdf file into a collection, categorize it, and tag terms.</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="upload-grid">
+                    <!-- 1) Pick a file -->
+                    <div class="upload-card">
+                        <div class="section-title"><i class="fa-solid fa-file-lines me-2" aria-hidden="true"></i>1) Pick a file</div>
+                        <div class="mb-2 d-flex align-items-center flex-wrap gap-2">
+                            <button type="button" class="btn btn-outline-primary"
+                                    @onclick="TriggerFilePicker">Choose File</button>
+                            <span class="file-name">@(_selectedFile?.Name ?? "No file selected")</span>
+                            <InputFile id="uploadFileInput" style="display:none;"
+                                       accept=".txt,.pdf"
+                                       OnChange="OnFileSelected" />
+                        </div>
+                        <div class="small text-muted">Only <strong>.txt</strong> and <strong>.pdf</strong> files are accepted.</div>
+                    </div>
+
+                    <!-- 2) Where should it live? -->
+                    <div class="upload-card">
+                        <div class="section-title"><i class="fa-solid fa-layer-group me-2" aria-hidden="true"></i>2) Where should it live?</div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Collection</label>
+                            <div class="d-flex align-items-center gap-2">
+                                @if (_newCollectionMode)
+                                {
+                                    <input type="text" class="form-control" placeholder="New collection name"
+                                           @bind="_newCollectionName" />
+                                }
+                                else
+                                {
+                                    <select class="form-select" @bind="_selectedCollectionId">
+                                        @foreach (var c in _collections)
+                                        {
+                                            <option value="@c.Id">@c.Name</option>
+                                        }
+                                    </select>
+                                }
+                                <button type="button" class="btn btn-outline-secondary"
+                                        @onclick="ToggleCollectionMode">
+                                    @(_newCollectionMode ? "Back" : "Add")
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <div class="d-flex align-items-center gap-2">
+                                @if (_newCategoryMode)
+                                {
+                                    <input type="text" class="form-control" placeholder="New category name"
+                                           @bind="_newCategoryName" />
+                                }
+                                else
+                                {
+                                    <select class="form-select" @bind="_selectedCategoryId">
+                                        @foreach (var c in _categories)
+                                        {
+                                            <option value="@c.Id">@c.Name</option>
+                                        }
+                                    </select>
+                                }
+                                <button type="button" class="btn btn-outline-secondary"
+                                        @onclick="ToggleCategoryMode">
+                                    @(_newCategoryMode ? "Back" : "Add")
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3) Tag terms -->
+                    <div class="upload-card">
+                        <div class="section-title"><i class="fa-solid fa-tags me-2" aria-hidden="true"></i>3) Tag terms</div>
+                        <label class="form-label">Terms</label>
+                        <div class="terms-container">
+                            @foreach (var term in _terms)
+                            {
+                                <label class="badge bg-light border rounded-pill me-2 mb-2 d-inline-flex align-items-center">
+                                    <input type="checkbox" class="me-1 ms-1"
+                                           value="@term.Id"
+                                           checked="@_selectedTermIds.Contains(term.Id)"
+                                           @onchange="e => ToggleTerm(term.Id, (bool)(e.Value ?? false))" />
+                                    @term.Name
+                                </label>
+                            }
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mt-2">
+                            <input type="text" class="form-control" placeholder="New term name"
+                                   @bind="_newTermInput" />
+                            <button type="button" class="btn btn-outline-primary"
+                                    @onclick="AddNewTerm">Add Term</button>
+                        </div>
+                        @if (_newTermNames.Any())
+                        {
+                            <div class="mt-2">
+                                @foreach (var t in _newTermNames)
+                                {
+                                    <span class="badge bg-secondary me-1 mb-1" style="border-radius:999px;padding:8px 10px;">
+                                        @t
+                                        <button type="button" class="btn-close btn-close-white ms-1 p-0"
+                                                style="font-size:0.65em;"
+                                                aria-label="Remove"
+                                                @onclick="() => _newTermNames.Remove(t)"></button>
+                                    </span>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                </div>
+
+                @if (_isUploading)
+                {
+                    <div class="text-center my-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Uploading...</span>
+                        </div>
+                        <div class="small text-muted mt-2">Bubbling it through the swamp&hellip;</div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(_statusMessage))
+                {
+                    <div class="alert @(_isError ? "alert-danger" : "alert-success") mt-2 mb-0">@_statusMessage</div>
+                }
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="Reset">Close</button>
+                <button type="button" class="btn fun-btn"
+                        disabled="@_isUploading"
+                        @onclick="DoUpload">
+                    Upload File
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Collection> _collections = new();
+    private List<Category> _categories = new();
+    private List<Term> _terms = new();
+
+    private int _selectedCollectionId;
+    private int _selectedCategoryId;
+
+    private HashSet<int> _selectedTermIds = new();
+
+    private bool _newCollectionMode;
+    private bool _newCategoryMode;
+    private string _newCollectionName = "";
+    private string _newCategoryName = "";
+
+    private string _newTermInput = "";
+    private List<string> _newTermNames = new();
+
+    private IBrowserFile? _selectedFile;
+    private bool _isUploading;
+    private string _statusMessage = "";
+    private bool _isError;
+
+    public async Task ShowAsync()
+    {
+        await LoadDataAsync();
+        await JS.InvokeVoidAsync("showBootstrapModal", "uploadModal");
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _collections = EntityService.GetCollections();
+        _categories = EntityService.GetCategories();
+        _terms = EntityService.GetTerms();
+
+        if (_collections.Any()) _selectedCollectionId = _collections.First().Id;
+        if (_categories.Any()) _selectedCategoryId = _categories.First().Id;
+
+        StateHasChanged();
+    }
+
+    private async Task TriggerFilePicker()
+    {
+        await JS.InvokeVoidAsync("triggerFileInput", "uploadFileInput");
+    }
+
+    private void OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _selectedFile = e.File;
+        _statusMessage = "";
+    }
+
+    private void ToggleCollectionMode()
+    {
+        _newCollectionMode = !_newCollectionMode;
+        _newCollectionName = "";
+    }
+
+    private void ToggleCategoryMode()
+    {
+        _newCategoryMode = !_newCategoryMode;
+        _newCategoryName = "";
+    }
+
+    private void ToggleTerm(int id, bool isChecked)
+    {
+        if (isChecked) _selectedTermIds.Add(id);
+        else _selectedTermIds.Remove(id);
+    }
+
+    private void AddNewTerm()
+    {
+        var name = _newTermInput.Trim();
+        if (!string.IsNullOrEmpty(name) && !_newTermNames.Contains(name))
+        {
+            _newTermNames.Add(name);
+        }
+        _newTermInput = "";
+    }
+
+    private async Task DoUpload()
+    {
+        _statusMessage = "";
+        _isError = false;
+
+        if (_selectedFile == null)
+        {
+            _statusMessage = "Please choose a file first.";
+            _isError = true;
+            return;
+        }
+
+        var ext = Path.GetExtension(_selectedFile.Name).ToLowerInvariant();
+        if (ext != ".txt" && ext != ".pdf")
+        {
+            _statusMessage = "Only .txt and .pdf files are allowed.";
+            _isError = true;
+            return;
+        }
+
+        _isUploading = true;
+        StateHasChanged();
+
+        try
+        {
+            var ms = new MemoryStream();
+            await _selectedFile.OpenReadStream(10_000_000).CopyToAsync(ms);
+            ms.Position = 0;
+
+            var formFile = new Microsoft.AspNetCore.Http.FormFile(ms, 0, ms.Length, "file", _selectedFile.Name)
+            {
+                Headers = new Microsoft.AspNetCore.Http.HeaderDictionary(),
+                ContentType = _selectedFile.ContentType
+            };
+
+            var dto = new FileUploadDTO
+            {
+                file = formFile,
+                collectionId = _selectedCollectionId,
+                categoryId = _selectedCategoryId,
+                termIds = _selectedTermIds.Select(x => x.ToString()).ToList(),
+                newCollectionName = _newCollectionMode ? _newCollectionName : "",
+                newCategoryName = _newCategoryMode ? _newCategoryName : "",
+                newTermNames = _newTermNames.Count > 0 ? System.Text.Json.JsonSerializer.Serialize(_newTermNames) : ""
+            };
+
+            await FileManager.ProcessUpload(dto);
+
+            _statusMessage = "Uploaded and processed successfully.";
+            _isError = false;
+            Reset();
+        }
+        catch (Exception ex)
+        {
+            _statusMessage = ex.Message;
+            _isError = true;
+        }
+        finally
+        {
+            _isUploading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void Reset()
+    {
+        _selectedFile = null;
+        _newCollectionMode = false;
+        _newCategoryMode = false;
+        _newCollectionName = "";
+        _newCategoryName = "";
+        _selectedTermIds.Clear();
+        _newTermInput = "";
+        _newTermNames.Clear();
+    }
+}
