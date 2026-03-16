@@ -11,7 +11,9 @@ public sealed class McpProcessClient : IMcpClient
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly string _workingDirectory;
     private readonly ConcurrentQueue<string> _stderrTail = new();
+    private readonly ConcurrentQueue<string> _stdoutTail = new();
     private const int MaxStderrTailLines = 200;
+    private const int MaxStdoutTailLines = 200;
 
     private Process? _process;
     private StreamWriter? _stdin;
@@ -42,78 +44,33 @@ public sealed class McpProcessClient : IMcpClient
         await _mutex.WaitAsync(cancellationToken);
         try
         {
-            EnsureProcessStarted();
+            Exception? lastException = null;
 
-            var id = Interlocked.Increment(ref _nextId);
-
-            var request = new
+            // First try: start with --no-build to avoid build-time file locks when a second MCP instance is already running.
+            // Fallback: retry with a build if the project isn't built yet.
+            for (var attempt = 0; attempt < 2; attempt++)
             {
-                jsonrpc = "2.0",
-                id,
-                method = "tools/call",
-                @params = new
-                {
-                    name = toolName,
-                    arguments = arguments ?? new { }
-                }
-            };
+                var startMode = attempt == 0 ? StartMode.NoBuild : StartMode.Build;
+                EnsureProcessStarted(startMode);
 
-            var json = JsonSerializer.Serialize(request, _jsonOptions);
-            await _stdin!.WriteLineAsync(json.AsMemory(), cancellationToken);
-            await _stdin.FlushAsync(cancellationToken);
-
-            // Server is line-delimited: one JSON-RPC response per line.
-            string? line;
-            while ((line = await _stdout!.ReadLineAsync(cancellationToken)) != null)
-            {
-                if (string.IsNullOrWhiteSpace(line)) continue;
-
-                JsonDocument doc;
                 try
                 {
-                    doc = JsonDocument.Parse(line);
+                    return await CallToolOnceAsync<T>(toolName, arguments, cancellationToken);
                 }
-                catch (JsonException)
+                catch (Exception ex) when (attempt == 0 && _lastStartUsedDefaultArgs && OutputIndicatesNoBuildFailure())
                 {
-                    // If the MCP server (or `dotnet run`) emits non-JSON lines on stdout,
-                    // ignore them and keep reading for the actual JSON-RPC response.
+                    lastException = ex;
+                    DisposeProcess();
                     continue;
                 }
-
-                using (doc)
+                catch (Exception ex)
                 {
-                    if (!doc.RootElement.TryGetProperty("id", out var respId)) continue;
-                    if (respId.ValueKind != JsonValueKind.Number) continue;
-                    if (respId.GetInt64() != id) continue;
-
-                    if (doc.RootElement.TryGetProperty("error", out var err) && err.ValueKind != JsonValueKind.Null)
-                    {
-                        var msg = err.TryGetProperty("message", out var m) ? m.GetString() : "Unknown MCP error";
-                        throw new InvalidOperationException(msg);
-                    }
-
-                    var result = doc.RootElement.GetProperty("result");
-                    var content = result.GetProperty("content");
-
-                    if (content.ValueKind != JsonValueKind.Array || content.GetArrayLength() == 0)
-                    {
-                        return default!;
-                    }
-
-                    var text = content[0].GetProperty("text").GetString() ?? "";
-
-                    // The MCP server wraps tool results as JSON-encoded text.
-                    // Deserialize that JSON into the requested type.
-                    return JsonSerializer.Deserialize<T>(text, _jsonOptions)!;
+                    lastException = ex;
+                    throw;
                 }
             }
 
-            if (_process is { HasExited: true })
-            {
-                throw new InvalidOperationException($"MCP server exited (code {_process.ExitCode}). Stderr tail:\n{GetStderrTail()}".Trim());
-            }
-
-            throw new InvalidOperationException($"MCP server closed stdout. Stderr tail:\n{GetStderrTail()}".Trim());
+            throw lastException ?? new InvalidOperationException("MCP call failed.");
         }
         finally
         {
@@ -121,11 +78,102 @@ public sealed class McpProcessClient : IMcpClient
         }
     }
 
-    private void EnsureProcessStarted()
+    private async Task<T> CallToolOnceAsync<T>(string toolName, object? arguments, CancellationToken cancellationToken)
+    {
+        ThrowIfProcessExited();
+
+        var id = Interlocked.Increment(ref _nextId);
+
+        var request = new
+        {
+            jsonrpc = "2.0",
+            id,
+            method = "tools/call",
+            @params = new
+            {
+                name = toolName,
+                arguments = arguments ?? new { }
+            }
+        };
+
+        var json = JsonSerializer.Serialize(request, _jsonOptions);
+
+        try
+        {
+            await _stdin!.WriteLineAsync(json.AsMemory(), cancellationToken);
+            await _stdin.FlushAsync(cancellationToken);
+        }
+        catch (Exception)
+        {
+            ThrowIfProcessExited();
+            throw;
+        }
+
+        // Server is line-delimited: one JSON-RPC response per line.
+        string? line;
+        while ((line = await _stdout!.ReadLineAsync(cancellationToken)) != null)
+        {
+            if (string.IsNullOrWhiteSpace(line)) continue;
+
+            JsonDocument doc;
+            try
+            {
+                doc = JsonDocument.Parse(line);
+            }
+            catch (JsonException)
+            {
+                // `dotnet run`/MSBuild output is not JSON; keep a tail so we can show it on failure.
+                AppendStdout(line);
+                continue;
+            }
+
+            using (doc)
+            {
+                if (!doc.RootElement.TryGetProperty("id", out var respId)) continue;
+                if (respId.ValueKind != JsonValueKind.Number) continue;
+                if (respId.GetInt64() != id) continue;
+
+                if (doc.RootElement.TryGetProperty("error", out var err) && err.ValueKind != JsonValueKind.Null)
+                {
+                    var msg = err.TryGetProperty("message", out var m) ? m.GetString() : "Unknown MCP error";
+                    throw new InvalidOperationException(msg);
+                }
+
+                var result = doc.RootElement.GetProperty("result");
+                var content = result.GetProperty("content");
+
+                if (content.ValueKind != JsonValueKind.Array || content.GetArrayLength() == 0)
+                {
+                    return default!;
+                }
+
+                var text = content[0].GetProperty("text").GetString() ?? "";
+
+                // The MCP server wraps tool results as JSON-encoded text.
+                // Deserialize that JSON into the requested type.
+                return JsonSerializer.Deserialize<T>(text, _jsonOptions)!;
+            }
+        }
+
+        ThrowIfProcessExited();
+
+        throw new InvalidOperationException($"MCP server closed stdout. Stdout tail:\n{GetStdoutTail()}\n\nStderr tail:\n{GetStderrTail()}".Trim());
+    }
+
+    private enum StartMode
+    {
+        NoBuild,
+        Build
+    }
+
+    private bool _lastStartUsedDefaultArgs;
+
+    private void EnsureProcessStarted(StartMode startMode)
     {
         if (_process is { HasExited: false } && _stdin != null && _stdout != null) return;
 
         DisposeProcess();
+        ResetOutputTails();
 
         // Defaults to: dotnet run --project ..\SemanticKernel.MCP\SemanticKernel.MCP.csproj
         var command = Configuration["McpServer:Command"];
@@ -138,7 +186,14 @@ public sealed class McpProcessClient : IMcpClient
 
         if (string.IsNullOrWhiteSpace(args))
         {
-            args = "run --project ..\\SemanticKernel.MCP\\SemanticKernel.MCP.csproj";
+            _lastStartUsedDefaultArgs = true;
+            args = startMode == StartMode.NoBuild
+                ? "run --no-build --project ..\\SemanticKernel.MCP\\SemanticKernel.MCP.csproj"
+                : "run --project ..\\SemanticKernel.MCP\\SemanticKernel.MCP.csproj";
+        }
+        else
+        {
+            _lastStartUsedDefaultArgs = false;
         }
 
         var psi = new ProcessStartInfo(command, args)
@@ -183,10 +238,49 @@ public sealed class McpProcessClient : IMcpClient
         }
     }
 
+    private void AppendStdout(string line)
+    {
+        _stdoutTail.Enqueue(line);
+        while (_stdoutTail.Count > MaxStdoutTailLines && _stdoutTail.TryDequeue(out _))
+        {
+        }
+    }
+
     private string GetStderrTail()
     {
         if (_stderrTail.IsEmpty) return "<empty>";
         return string.Join(Environment.NewLine, _stderrTail);
+    }
+
+    private string GetStdoutTail()
+    {
+        if (_stdoutTail.IsEmpty) return "<empty>";
+        return string.Join(Environment.NewLine, _stdoutTail);
+    }
+
+    private void ResetOutputTails()
+    {
+        while (_stderrTail.TryDequeue(out _)) { }
+        while (_stdoutTail.TryDequeue(out _)) { }
+    }
+
+    private void ThrowIfProcessExited()
+    {
+        if (_process is not { HasExited: true }) return;
+
+        throw new InvalidOperationException(
+            $"MCP server exited (code {_process.ExitCode}). Stdout tail:\n{GetStdoutTail()}\n\nStderr tail:\n{GetStderrTail()}".Trim());
+    }
+
+    private bool OutputIndicatesNoBuildFailure()
+    {
+        var combined = (GetStdoutTail() + "\n" + GetStderrTail()).ToLowerInvariant();
+
+        return combined.Contains("unable to run your project")
+            || combined.Contains("not ready to run")
+            || combined.Contains("build the project")
+            || combined.Contains("--no-build")
+            || combined.Contains("restore") && combined.Contains("nuget");
     }
 
     private void DisposeProcess()

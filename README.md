@@ -204,6 +204,11 @@ Items in Visual Studio's Solution Explorer:
 | [`docs/06-semantic-kernel.md`](docs/06-semantic-kernel.md) | SK kernel construction, plugins, chat session flow, prompts |
 | [`docs/07-blazor-ui.md`](docs/07-blazor-ui.md) | Blazor project layout, pages, modals, services, JS interop |
 | [`docs/08-setup-and-running.md`](docs/08-setup-and-running.md) | Full local dev setup: SQL DDL, Qdrant, LM Studio, user secrets, troubleshooting |
+| [`docs/09-blazor-primer.md`](docs/09-blazor-primer.md) | General Blazor Server primer (circuits, rendering, DI lifetimes, JS interop, uploads) |
+| [`docs/10-mcp-server.md`](docs/10-mcp-server.md) | How the MCP server works (`SemanticKernel.MCP`): JSON-RPC loop, tools, scoping |
+| [`docs/11-mcp-agent-client.md`](docs/11-mcp-agent-client.md) | How the MCP-backed Blazor client works (`SemanticSwamp.MCPBlazor`) |
+| [`docs/12-deployment-mcp.md`](docs/12-deployment-mcp.md) | Deployment considerations for MCP server/client topologies and configuration |
+| [`docs/13-mcp-agent-server-interaction.md`](docs/13-mcp-agent-server-interaction.md) | In-depth guide to how the MCP agent/client interacts with the MCP server |
 
 ---
 
