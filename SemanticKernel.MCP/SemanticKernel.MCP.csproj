@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <UserSecretsId>SemanticSwamp.Blazor</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SemanticSwamp.SK\SemanticSwamp.SK.csproj" />
+    <ProjectReference Include="..\SemanticSwamp.DAL\SemanticSwamp.DAL.csproj" />
+    <ProjectReference Include="..\SemanticSwamp.Shared\SemanticSwamp.Shared.csproj" />
+    <ProjectReference Include="..\SemanticSwamp.AppLogic\SemanticSwamp.AppLogic.csproj" />
+  </ItemGroup>
+
+</Project>

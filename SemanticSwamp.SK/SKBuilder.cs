@@ -3,12 +3,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Embeddings;
 using Qdrant.Client;
 using SemanticSwamp.DAL.Context;
 using SemanticSwamp.Shared.Interfaces;
 using SemanticSwamp.Shared.Models;
 using SemanticSwamp.Shared.Utility;
+using SemanticSwamp.SK.Embeddings;
 using SemanticSwamp.SK.Plugins;
 using SemanticSwamp.SK.RAG;
 #pragma warning disable SKEXP0010
@@ -63,21 +65,58 @@ namespace SemanticSwamp.SK
         /// <returns>A <see cref="SemanticKernelBuilderResult"/> containing the built kernel and extracted AI services.</returns>
         public async Task<SemanticKernelBuilderResult> BuildSemanticKernel(ConfigurationValues configValues)
         {
-            var modelId = configValues.LMStudioSettings.LMStudio_Model;
-            var apiKey = configValues.LMStudioSettings.LMStudio_ApiKey;
-            var apiUrl = configValues.LMStudioSettings.LMStudio_ApiUrl;
-
             HttpClient client = new HttpClient()
             {
                 Timeout = new TimeSpan(2, 0, 0)
             };
 
-            var skBuilder = Kernel.CreateBuilder().AddOpenAIChatCompletion(
-                modelId: modelId,
-                apiKey: apiKey,
-                endpoint: new Uri(apiUrl),
-                httpClient: client
-            ).AddLocalTextEmbeddingGeneration();
+            var skBuilder = Kernel.CreateBuilder();
+
+            var provider = (configValues.AIProvider ?? "LocalLLM").Trim();
+
+            if (provider.Equals("AzureOpenAI", StringComparison.OrdinalIgnoreCase))
+            {
+                var endpoint = configValues.AzureOpenAISettings.AzureOpenAI_Endpoint;
+                var apiKey = configValues.AzureOpenAISettings.AzureOpenAI_ApiKey;
+                var chatDeployment = configValues.AzureOpenAISettings.AzureOpenAI_ChatDeployment;
+                var embeddingDeployment = configValues.AzureOpenAISettings.AzureOpenAI_EmbeddingDeployment;
+
+                if (string.IsNullOrWhiteSpace(endpoint) ||
+                    string.IsNullOrWhiteSpace(apiKey) ||
+                    string.IsNullOrWhiteSpace(chatDeployment) ||
+                    string.IsNullOrWhiteSpace(embeddingDeployment))
+                {
+                    throw new InvalidOperationException(
+                        "AIProvider is set to AzureOpenAI but one or more AzureOpenAI_* secrets are missing. " +
+                        "Please set AzureOpenAI_Endpoint, AzureOpenAI_ApiKey, AzureOpenAI_ChatDeployment, and AzureOpenAI_EmbeddingDeployment.");
+                }
+
+                skBuilder.AddAzureOpenAIChatCompletion(
+                    deploymentName: chatDeployment,
+                    endpoint: endpoint,
+                    apiKey: apiKey,
+                    httpClient: client);
+
+                skBuilder.AddAzureOpenAITextEmbeddingGeneration(
+                    deploymentName: embeddingDeployment,
+                    endpoint: endpoint,
+                    apiKey: apiKey,
+                    httpClient: client);
+            }
+            else
+            {
+                var modelId = configValues.LMStudioSettings.LMStudio_Model;
+                var apiKey = configValues.LMStudioSettings.LMStudio_ApiKey;
+                var apiUrl = configValues.LMStudioSettings.LMStudio_ApiUrl;
+
+                skBuilder.AddOpenAIChatCompletion(
+                    modelId: modelId,
+                    apiKey: apiKey,
+                    endpoint: new Uri(apiUrl),
+                    httpClient: client);
+
+                skBuilder.AddLocalTextEmbeddingGeneration();
+            }
 
             skBuilder.Services.AddDbContext<SemanticSwampDBContext>(options =>
             {
@@ -103,6 +142,12 @@ namespace SemanticSwamp.SK
 
             var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
             var textEmbeddingsGenerationService = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
+
+            if (provider.Equals("AzureOpenAI", StringComparison.OrdinalIgnoreCase))
+            {
+                // Qdrant schema currently expects 384-dim vectors (see DocumentUploadRAGEntry).
+                textEmbeddingsGenerationService = new FixedSizeTextEmbeddingGenerationService(textEmbeddingsGenerationService, dimensions: 384);
+            }
 
             return new SemanticKernelBuilderResult
             {

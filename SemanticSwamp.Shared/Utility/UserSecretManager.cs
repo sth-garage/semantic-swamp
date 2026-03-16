@@ -14,9 +14,15 @@ namespace SemanticSwamp.Shared.Utility
     /// <para>
     /// To initialise secrets for this project run the following commands from the solution root:
     /// <code>
+    /// dotnet user-secrets set "AIProvider" "LocalLLM"  (or "AzureOpenAI")
     /// dotnet user-secrets set "LMStudio_ApiKey"    "&lt;your-key&gt;"
     /// dotnet user-secrets set "LMStudio_ApiUrl"    "http://127.0.0.1:1234/v1"
     /// dotnet user-secrets set "LMStudio_Model"     "&lt;model-id&gt;"
+    /// 
+    /// dotnet user-secrets set "AzureOpenAI_Endpoint" "https://&lt;resource&gt;.openai.azure.com/"
+    /// dotnet user-secrets set "AzureOpenAI_ApiKey" "&lt;your-key&gt;"
+    /// dotnet user-secrets set "AzureOpenAI_ChatDeployment" "&lt;deployment-name&gt;"
+    /// dotnet user-secrets set "AzureOpenAI_EmbeddingDeployment" "&lt;deployment-name&gt;"
     /// dotnet user-secrets set "ConnectionString_SemanticSwamp" "Data Source=...;TrustServerCertificate=True"
     /// </code>
     /// </para>
@@ -47,6 +53,8 @@ namespace SemanticSwamp.Shared.Utility
                 result = new ConfigurationValues
                 {
 
+                    AIProvider = configurationRoot["AIProvider"] ?? "LocalLLM",
+
                     LMStudioSettings = new LMStudioSettings
                     {
                         // dotnet user-secrets set "LMStudio_ApiKey" "openai/gpt-oss-20b"
@@ -58,6 +66,13 @@ namespace SemanticSwamp.Shared.Utility
 
                         // dotnet user-secrets set "LMStudio_Model" "openai/gpt-oss-20b"
                         LMStudio_Model = configurationRoot["LMStudio_Model"] ?? "",
+                    },
+                    AzureOpenAISettings = new AzureOpenAISettings
+                    {
+                        AzureOpenAI_Endpoint = configurationRoot["AzureOpenAI_Endpoint"] ?? "",
+                        AzureOpenAI_ApiKey = configurationRoot["AzureOpenAI_ApiKey"] ?? "",
+                        AzureOpenAI_ChatDeployment = configurationRoot["AzureOpenAI_ChatDeployment"] ?? "",
+                        AzureOpenAI_EmbeddingDeployment = configurationRoot["AzureOpenAI_EmbeddingDeployment"] ?? "",
                     },
                     ConnectionStrings = new ConnectionStrings
                     {

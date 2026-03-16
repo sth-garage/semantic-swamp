@@ -1,0 +1,342 @@
+@page "/"
+@rendermode InteractiveServer
+@inject ChatService ChatSvc
+@inject IJSRuntime JS
+@implements IDisposable
+
+<PageTitle>Semantic Swamp - Semantigator Chat</PageTitle>
+
+<div class="app-shell">
+    <header class="app-header" aria-label="Semantic Swamp header">
+        <div class="brand">
+            <div class="brand-badge" aria-hidden="true">
+                <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="32" cy="37" rx="22" ry="14" fill="rgba(255,255,255,0.92)" />
+                    <ellipse cx="24" cy="28" rx="6.5" ry="5.5" fill="rgba(255,255,255,0.92)" />
+                    <ellipse cx="40" cy="28" rx="6.5" ry="5.5" fill="rgba(255,255,255,0.92)" />
+                    <circle cx="24" cy="28" r="2.2" fill="rgba(7,26,24,0.75)" />
+                    <circle cx="40" cy="28" r="2.2" fill="rgba(7,26,24,0.75)" />
+                    <path d="M22 41c6 4 14 4 20 0" stroke="rgba(7,26,24,0.65)" stroke-width="3.5" stroke-linecap="round" />
+                </svg>
+            </div>
+            <div class="brand-copy">
+                <div class="brand-title">Semantic Swamp</div>
+                <div class="brand-subtitle">Chat &bull; Upload &bull; Explore &mdash; with Semantigator</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="status-pill" data-kind="@ChatSvc.StatusKind">@ChatSvc.Status</div>
+            <button class="ghost-icon-btn" type="button" aria-label="Toggle theme" title="Toggle theme" @onclick="ToggleTheme">
+                <i class="fa-solid @(isDarkTheme ? "fa-sun" : "fa-moon")" aria-hidden="true"></i>
+            </button>
+        </div>
+    </header>
+
+    <nav class="app-navbar" aria-label="Main actions">
+        <div class="navbar-left">
+            <button class="btn fun-btn" type="button"
+                    disabled="@(!ChatSvc.IsReady || ChatSvc.IsWaiting)"
+                    @onclick="ShowUploadModal">
+                <i class="fa-solid fa-cloud-arrow-up me-2" aria-hidden="true"></i>Upload
+            </button>
+            <button class="btn fun-btn" type="button"
+                    disabled="@(!ChatSvc.IsReady)"
+                    @onclick="ShowDocumentsModal">
+                <i class="fa-solid fa-folder-open me-2" aria-hidden="true"></i>Documents
+            </button>
+            <div class="navbar-divider" aria-hidden="true"></div>
+            @foreach (var p in _prompts)
+            {
+                <button type="button" class="prompt-chip"
+                        disabled="@(!ChatSvc.IsReady || ChatSvc.IsWaiting)"
+                        @onclick="() => FillPrompt(p.Text)">@p.Label</button>
+            }
+        </div>
+    </nav>
+
+    <div class="app-main">
+        <section class="chat-card @(showSplash ? "splash" : "")" id="chatPane" role="main">
+            <div class="chat-card-header">
+                <div class="assistant-chip">
+                    <div class="assistant-avatar-wrap" title="Semantigator">
+                        <img alt="Semantigator avatar" src="Images/chat.png"
+                             onerror="this.style.display='none'; this.parentElement.classList.add('no-img');" />
+                        <span class="assistant-avatar-fallback" aria-hidden="true">S</span>
+                    </div>
+                    <div class="assistant-meta">
+                        <div class="assistant-name">Semantigator</div>
+                        <div class="assistant-state">@ChatSvc.Status</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-lake" id="chatArea" tabindex="0" aria-label="Chat messages">
+                @if (!ChatSvc.Messages.Any())
+                {
+                    <div class="welcome-hero">
+                        <div class="welcome-left">
+                            <h1>Welcome to <span class="title-gradient">Semantic Swamp</span></h1>
+                            <p class="lead">Ask questions, upload notes, and let Semantigator connect the dots.</p>
+                            <div class="welcome-hints">
+                                <span class="hint-pill"><i class="fa-solid fa-keyboard me-2" aria-hidden="true"></i>Enter to send &bull; history with arrows</span>
+                                <span class="hint-pill"><i class="fa-solid fa-stopwatch me-2" aria-hidden="true"></i>Tap latency badge for details</span>
+                            </div>
+                        </div>
+                        <div class="welcome-right" aria-hidden="true">
+                            <div class="lily-illustration">
+                                <div class="lily-pad"></div>
+                                <div class="lily-pad small"></div>
+                                <div class="frog"></div>
+                                <div class="bubble b1"></div>
+                                <div class="bubble b2"></div>
+                                <div class="bubble b3"></div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                @{
+                    var latestAssistantId = ChatSvc.Messages.LastOrDefault(m => m.Role == "Assistant")?.Id;
+                }
+                @foreach (var msg in ChatSvc.Messages)
+                {
+                    var anchorCls = msg.Id == latestAssistantId ? "latest-assistant-anchor" : "";
+                    <div class="chat-message @anchorCls" data-role="@msg.Role" tabindex="0">
+                        @if (msg.Role == "Client")
+                        {
+                            <div class="chat-bubble">@((MarkupString)msg.Content)</div>
+                            <div class="msg-avatar client" aria-hidden="true">YOU</div>
+                        }
+                        else if (msg.Role == "Assistant")
+                        {
+                            <div class="msg-avatar assistant" aria-hidden="true"></div>
+                            <div class="chat-bubble">
+                                @((MarkupString)msg.Content)
+                                @if (msg.LatencySeconds.HasValue)
+                                {
+                                    <button class="latency-badge" type="button"
+                                            title="View message details"
+                                            @onclick="() => ShowMessageDetail(msg)">
+                                        @msg.LatencySeconds.Value.ToString("F2") seconds
+                                    </button>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="chat-bubble">@((MarkupString)msg.Content)</div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="chat-footer">
+                <div class="typing-indicator" aria-live="polite" aria-atomic="true">
+                    <span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>
+                    <span class="typing-text">Semantigator is pondering&hellip;</span>
+                </div>
+                <div class="chat-input-row">
+                    <div class="input-shell">
+                        <i class="fa-solid fa-comment-dots input-icon" aria-hidden="true"></i>
+                        <input type="text" id="sendMessage" class="form-control"
+                               placeholder="Ask a question or toss a thought into the swamp"
+                               aria-label="Message to send"
+                               autocomplete="off"
+                               disabled="@(!ChatSvc.IsReady || ChatSvc.IsWaiting)"
+                               @bind="messageText"
+                               @bind:event="oninput"
+                               @onkeydown="HandleKeyDown" />
+                    </div>
+                    <button class="btn send-btn" type="button"
+                            disabled="@(!ChatSvc.IsReady || ChatSvc.IsWaiting || string.IsNullOrWhiteSpace(messageText))"
+                            @onclick="SendMessage">
+                        Send <i class="fa-solid fa-paper-plane ms-2" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- Chat Detail Modal -->
+<div class="modal fade fun-modal" id="chatDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Message Details@(detailMessage?.LatencySeconds.HasValue == true ? $" • {detailMessage.LatencySeconds.Value:F2}s" : "")
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @if (detailMessage != null)
+                {
+                    <div class="md-line"><span class="md-label">Timestamp:</span> @detailMessage.Timestamp.ToLocalTime().ToString("g")</div>
+                    @if (detailMessage.LatencySeconds.HasValue)
+                    {
+                        <div class="md-line"><span class="md-label">Latency:</span> @detailMessage.LatencySeconds.Value.ToString("F2") seconds</div>
+                    }
+                    <div class="md-line"><span class="md-label">Role:</span> @detailMessage.Role</div>
+                    <div class="mt-3">
+                        <div class="md-subtitle">Content</div>
+                        <pre class="pre-raw" style="max-height:320px;overflow:auto;white-space:pre-wrap;">@detailMessage.Content</pre>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<UploadModal @ref="_uploadModal" />
+<DocumentsModal @ref="_documentsModal" />
+
+@code {
+    private string messageText = "";
+    private bool isDarkTheme;
+    private bool showSplash;
+    private UiChatMessage? detailMessage;
+    private bool _scrollToBottom;
+
+    private UploadModal? _uploadModal;
+    private DocumentsModal? _documentsModal;
+
+    private readonly List<string> _inputHistory = new();
+    private int _inputHistoryIndex = -1;
+
+    private record PromptEntry(string Label, string Text);
+    private static readonly PromptEntry[] _prompts =
+    [
+        new("3-bullet summary",         "Give me a 3-bullet summary of our conversation so far."),
+        new("Explain like I'm 10",      "Explain this like I'm 10 years old."),
+        new("Key terms",                "What are the key terms I should remember?"),
+        new("Ask clarifying questions", "Ask me 3 clarifying questions before answering."),
+        new("Checklist",                "Create a checklist I can follow."),
+        new("Study guide",              "Turn this into a short study guide with headings."),
+    ];
+
+    protected override void OnInitialized()
+    {
+        ChatSvc.OnStateChanged += OnChatStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var stored = await JS.InvokeAsync<string>("getStoredTheme");
+            isDarkTheme = stored == "midnight";
+            await JS.InvokeVoidAsync("applyTheme", isDarkTheme ? "midnight" : "dawn");
+            StateHasChanged();
+
+            _ = ChatSvc.IntroduceAsync();
+        }
+
+        if (_scrollToBottom)
+        {
+            _scrollToBottom = false;
+            await JS.InvokeVoidAsync("scrollChatToBottom", "chatArea");
+        }
+
+        await JS.InvokeVoidAsync("setWaitingClass", ChatSvc.IsWaiting);
+    }
+
+    private void OnChatStateChanged()
+    {
+        _scrollToBottom = true;
+
+        if (ChatSvc.Messages.LastOrDefault()?.Role == "Assistant")
+        {
+            showSplash = true;
+            _ = InvokeAsync(async () =>
+            {
+                StateHasChanged();
+                await Task.Delay(700);
+                showSplash = false;
+                StateHasChanged();
+            });
+        }
+        else
+        {
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        var text = messageText?.Trim();
+        if (string.IsNullOrEmpty(text) || !ChatSvc.IsReady || ChatSvc.IsWaiting) return;
+
+        messageText = "";
+        _inputHistory.Add(text);
+        _inputHistoryIndex = _inputHistory.Count;
+        _scrollToBottom = true;
+
+        await ChatSvc.SendMessageAsync(text);
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SendMessage();
+        }
+        else if (e.Key == "ArrowUp")
+        {
+            if (_inputHistoryIndex > 0)
+            {
+                _inputHistoryIndex--;
+                messageText = _inputHistory[_inputHistoryIndex];
+            }
+        }
+        else if (e.Key == "ArrowDown")
+        {
+            if (_inputHistoryIndex < _inputHistory.Count - 1)
+            {
+                _inputHistoryIndex++;
+                messageText = _inputHistory[_inputHistoryIndex];
+            }
+            else
+            {
+                _inputHistoryIndex = _inputHistory.Count;
+                messageText = "";
+            }
+        }
+    }
+
+    private async Task ToggleTheme()
+    {
+        isDarkTheme = !isDarkTheme;
+        await JS.InvokeVoidAsync("applyTheme", isDarkTheme ? "midnight" : "dawn");
+    }
+
+    private void FillPrompt(string text)
+    {
+        if (!ChatSvc.IsReady || ChatSvc.IsWaiting) return;
+        messageText = text;
+    }
+
+    private async Task ShowUploadModal()
+    {
+        if (_uploadModal != null)
+            await _uploadModal.ShowAsync();
+    }
+
+    private async Task ShowDocumentsModal()
+    {
+        if (_documentsModal != null)
+            await _documentsModal.ShowAsync();
+    }
+
+    private async Task ShowMessageDetail(UiChatMessage msg)
+    {
+        detailMessage = msg;
+        await JS.InvokeVoidAsync("showBootstrapModal", "chatDetailModal");
+    }
+
+    public void Dispose()
+    {
+        ChatSvc.OnStateChanged -= OnChatStateChanged;
+    }
+}
